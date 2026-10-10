@@ -68,6 +68,8 @@ namespace Plank {
     Surface? urgent_glow_buffer = null;
 
     int64 last_hide = 0LL;
+
+    uint icon_regions_timer = 0U;
     int64 last_hovered_changed = 0LL;
 
     bool screen_is_composited = false;
@@ -131,6 +133,11 @@ namespace Plank {
       if (reset_position_manager_timer_id > 0U) {
         GLib.Source.remove (reset_position_manager_timer_id);
         reset_position_manager_timer_id = 0U;
+      }
+
+      if (icon_regions_timer > 0U) {
+        GLib.Source.remove (icon_regions_timer);
+        icon_regions_timer = 0U;
       }
 
       controller.prefs.notify.disconnect (prefs_changed);
@@ -1110,6 +1117,17 @@ namespace Plank {
       }
 
       controller.window.update_icon_regions ();
+
+      // The regions above were taken at the start of the slide, while the
+      // dock still counted as hidden; once the slide ends they are taken
+      // again, or a window minimized then goes to the screen's edge
+      if (icon_regions_timer > 0U)
+        GLib.Source.remove (icon_regions_timer);
+      icon_regions_timer = GLib.Timeout.add ((uint) time + 50U, () => {
+        icon_regions_timer = 0U;
+        controller.window.update_icon_regions ();
+        return false;
+      });
 
       animated_draw ();
     }

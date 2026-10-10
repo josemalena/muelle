@@ -2291,35 +2291,19 @@ namespace Plank {
 
       if (!for_hidden) {
         var region = Gdk.Rectangle ();
-        // The box follows the zoomed icon in steps, around the same spot, so
-        // a zoom changes the target a few times rather than on every frame,
-        // and it is back at its normal size once the zoom ends
-        var normal_side = 2 * (int) Math.round (IconSize / 4.0);
-        var zoomed_side = 2 * (int) Math.round (double.max (IconSize, draw_value.icon_size) / 4.0);
-        int hit_box_size = item.follow_icon_box_side (normal_side, zoomed_side) / 2;
+        // The box is the icon itself, as in the macOS Dock, so the genie
+        // pours the window into the icon rather than into a point on the
+        // dock's edge. It follows the zoomed icon in steps, around the same
+        // spot, so a zoom changes the target a few times rather than on every
+        // frame, and it is back at its normal size once the zoom ends
+        var normal_side = 2 * (int) Math.round (IconSize / 2.0);
+        var zoomed_side = 2 * (int) Math.round (double.max (IconSize, draw_value.icon_size) / 2.0);
+        int half = item.follow_icon_box_side (normal_side, zoomed_side) / 2;
 
-        region.width = hit_box_size * 2;
-        region.height = hit_box_size * 2;
-
-        switch (Position) {
-        default:
-        case Gtk.PositionType.BOTTOM:
-          region.x = (int) Math.round (draw_value.static_center.x - hit_box_size) + win_x;
-          region.y = win_y + DockHeight + GapSize - hit_box_size;
-          break;
-        case Gtk.PositionType.TOP:
-          region.x = (int) Math.round (draw_value.static_center.x - hit_box_size) + win_x;
-          region.y = win_y - GapSize;
-          break;
-        case Gtk.PositionType.LEFT:
-          region.y = (int) Math.round (draw_value.static_center.y - hit_box_size) + win_y;
-          region.x = win_x - GapSize;
-          break;
-        case Gtk.PositionType.RIGHT:
-          region.y = (int) Math.round (draw_value.static_center.y - hit_box_size) + win_y;
-          region.x = win_x + DockWidth + GapSize - hit_box_size;
-          break;
-        }
+        region.width = half * 2;
+        region.height = half * 2;
+        region.x = (int) Math.round (draw_value.static_center.x - half) + win_x;
+        region.y = (int) Math.round (draw_value.static_center.y - half) + win_y;
 
         region.x *= window_scale_factor;
         region.y *= window_scale_factor;
