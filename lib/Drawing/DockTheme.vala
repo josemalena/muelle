@@ -47,8 +47,14 @@ namespace Plank {
     [Description (nick = "indicator-size", blurb = "The size of item indicators, in tenths of a percent of IconSize.")]
     public double IndicatorSize { get; set; }
 
-    [Description (nick = "indicator-style", blurb = "The style of item indicators, styles: circle-glow, circle-color-glow, circle, underline.")]
+    [Description (nick = "indicator-style", blurb = "The style of item indicators, styles: circle-glow, circle-color-glow, circle, underline, dot (macOS).")]
     public IndicatorStyleType IndicatorStyle { get; set; }
+
+    [Description (nick = "blur-radius", blurb = "The radius (in pixels) to blur the desktop wallpaper behind the dock background, like macOS. 0 turns it off.")]
+    public double BlurRadius { get; set; }
+
+    [Description (nick = "indicator-offset", blurb = "How far down (positive) or up (negative) to move the dot indicator, in tenths of a percent of IconSize.")]
+    public double IndicatorOffset { get; set; }
 
     [Description (nick = "icon-shadow-size", blurb = "The size of the icon-shadow behind every item, in tenths of a percent of IconSize.")]
     public double IconShadowSize { get; set; }
@@ -138,6 +144,8 @@ namespace Plank {
       IndicatorColor = { 1.0, 1.0, 1.0, 1.0 };
       IndicatorSize = 5.0;
       IndicatorStyle = IndicatorStyleType.LEGACY;
+      IndicatorOffset = 0.0;
+      BlurRadius = 0.0;
       IconShadowSize = 1.0;
       UrgentBounceHeight = 5.0 / 3.0;
       LaunchBounceHeight = 0.625;
@@ -350,6 +358,16 @@ namespace Plank {
           cr.stroke_preserve ();
           cr.fill ();
         }
+        break;
+      case IndicatorStyleType.DOT:
+        // macOS: un solo punto liso, centrado bajo el ícono y pegado al
+        // borde del dock, aunque la aplicación tenga varias ventanas.
+        var dot_x = width / 2.0;
+        var dot_y = height - size / 2.0 - get_bottom_offset () + IndicatorOffset * icon_size / 10.0;
+
+        cr.arc (dot_x, dot_y, size / 2.0, 0, Math.PI * 2);
+        cr.set_source_rgba (color.red, color.green, color.blue, color.alpha);
+        cr.fill ();
         break;
       case IndicatorStyleType.LINE:
         var x = Math.round (icon_size / 10.0);
@@ -752,7 +770,7 @@ namespace Plank {
         break;
 
       case "IndicatorStyle":
-        if (IndicatorStyle < 0 || IndicatorStyle > 3)
+        if (IndicatorStyle < 0 || IndicatorStyle > 4)
           IndicatorStyle = IndicatorStyleType.LEGACY;
         break;
 

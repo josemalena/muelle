@@ -60,6 +60,8 @@ namespace Plank {
     int scratch_surface_size = 0;
 
     Surface? background_buffer = null;
+    // El fondo de pantalla desenfocado detrás del dock (BlurRadius > 0).
+    WallpaperBlur wallpaper_blur;
     Gdk.Rectangle background_rect;
     Surface[] indicator_buffer = new Surface[2];
     Surface[] urgent_indicator_buffer = new Surface[2];
@@ -105,6 +107,9 @@ namespace Plank {
       controller.prefs.notify.connect (prefs_changed);
 
       gtk_theme_name_changed_handler_id = Gtk.Settings.get_default ().notify["gtk-theme-name"].connect (gtk_theme_name_changed);
+
+      wallpaper_blur = new WallpaperBlur ();
+      wallpaper_blur.changed.connect (animated_draw);
 
       load_theme ();
     }
@@ -546,8 +551,57 @@ namespace Plank {
         y_offset -= (int) (y * hide_progress);
       }
 
+      if (theme.BlurRadius > 0 && screen_is_composited)
+        draw_wallpaper_blur (cr, background_rect, x_offset, y_offset);
+
       cr.set_source_surface (background_buffer.Internal, background_rect.x + x_offset, background_rect.y + y_offset);
       cr.paint ();
+    }
+
+    /**
+     * Pinta, dentro de la silueta del fondo del dock, el pedazo del fondo de
+     * pantalla desenfocado que le queda detrás (ver WallpaperBlur). El relleno
+     * translúcido del tema va encima.
+     */
+    void draw_wallpaper_blur (Cairo.Context cr, Gdk.Rectangle background_rect, int x_offset, int y_offset) {
+      unowned PositionManager position_manager = controller.position_manager;
+      var monitor = position_manager.get_raw_monitor_geometry ();
+      unowned Surface? blurred = wallpaper_blur.get_blurred (monitor, (int) theme.BlurRadius);
+      if (blurred == null)
+        return;
+
+      int win_x, win_y;
+      controller.window.get_position (out win_x, out win_y);
+
+      double x = background_rect.x + x_offset;
+      double y = background_rect.y + y_offset;
+      double width = background_rect.width;
+      double height = background_rect.height;
+      var line_width = theme.LineWidth;
+
+      cr.save ();
+
+      // La misma silueta que Theme.draw_background. Las esquinas redondas
+      // solo están arriba con el dock abajo; en otra posición, un rectángulo.
+      if (position_manager.Position == Gtk.PositionType.BOTTOM) {
+        var bottom_offset = theme.BottomRoundness > 0 ? line_width : -line_width;
+        Theme.draw_rounded_rect (cr, x + line_width / 2.0, y + line_width / 2.0,
+                                 width - line_width, height - line_width / 2.0 - bottom_offset / 2.0,
+                                 theme.TopRoundness, theme.BottomRoundness, line_width);
+      } else {
+        cr.rectangle (x, y, width, height);
+      }
+      cr.clip ();
+
+      // De coordenadas de la ventana a las del monitor, y de vuelta al tamaño
+      // real (el desenfoque está reducido por WallpaperBlur.SCALE).
+      cr.translate (monitor.x - win_x, monitor.y - win_y);
+      cr.scale ((double) monitor.width / blurred.Width, (double) monitor.height / blurred.Height);
+      cr.set_source_surface (blurred.Internal, 0, 0);
+      cr.get_source ().set_filter (Cairo.Filter.BILINEAR);
+      cr.paint ();
+
+      cr.restore ();
     }
 
     [CCode (instance_pos = -1)]

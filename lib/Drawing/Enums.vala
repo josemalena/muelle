@@ -38,7 +38,12 @@ namespace Plank {
     /**
      * A solid line using a color defined by the theme
      */
-    LINE
+    LINE,
+    /**
+     * A single solid dot, like the macOS Dock: one dot no matter how many
+     * windows the application has, using a color defined by the theme
+     */
+    DOT
   }
 
   /**

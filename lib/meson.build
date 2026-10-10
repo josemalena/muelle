@@ -21,6 +21,7 @@ plank_lib_sources = [
   'Drawing/Surface.vala',
   'Drawing/SurfaceCache.vala',
   'Drawing/Theme.vala',
+  'Drawing/WallpaperBlur.vala',
   'Factories/AbstractMain.vala',
   'Factories/Factory.vala',
   'Factories/ItemFactory.vala',
