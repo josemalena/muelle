@@ -181,6 +181,11 @@ namespace Plank {
     }
 
     ~ApplicationDockItem () {
+      if (calendar_timer_id > 0U) {
+        Source.remove (calendar_timer_id);
+        calendar_timer_id = 0U;
+      }
+
       supported_mime_types = null;
       actions = null;
       actions_map = null;
@@ -876,6 +881,53 @@ namespace Plank {
       Icon = icon;
       ForcePixbuf = null;
       Text = text;
+
+      update_calendar ();
+    }
+
+    // El Calendario enseña la fecha de hoy, como en el Dock de macOS: un
+    // lanzador cuyo .desktop tiene la categoría Calendar se dibuja con
+    // CalendarIcon y se rehace a la medianoche.
+    bool is_calendar = false;
+    uint calendar_timer_id = 0U;
+
+    void update_calendar () {
+      is_calendar = false;
+      try {
+        var path = Filename.from_uri (Prefs.Launcher);
+        var info = new DesktopAppInfo.from_filename (path);
+        unowned string? categories = (info != null ? info.get_categories () : null);
+        if (categories != null)
+          foreach (unowned string c in categories.split (";"))
+            if (c == "Calendar")
+              is_calendar = true;
+      } catch (Error e) {
+        debug ("Sin categorías para '%s': %s", Prefs.Launcher, e.message);
+      }
+
+      if (calendar_timer_id > 0U) {
+        Source.remove (calendar_timer_id);
+        calendar_timer_id = 0U;
+      }
+      if (is_calendar)
+        schedule_midnight ();
+    }
+
+    void schedule_midnight () {
+      calendar_timer_id = GLib.Timeout.add (CalendarIcon.ms_until_midnight (), () => {
+        calendar_timer_id = 0U;
+        reset_icon_buffer ();
+        schedule_midnight ();
+        return false;
+      });
+    }
+
+    protected override void draw_icon (Surface surface) {
+      if (!is_calendar) {
+        base.draw_icon (surface);
+        return;
+      }
+      CalendarIcon.draw (surface.Context, int.min (surface.Width, surface.Height), new DateTime.now_local ());
     }
 
     /**

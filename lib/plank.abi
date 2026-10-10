@@ -188,6 +188,11 @@ function plank_application_dock_item_unity_reset void plank_application_dock_ite
 function plank_application_dock_item_unity_update void plank_application_dock_item_unity_update (PlankApplicationDockItem* self, const gchar* sender_name, GVariantIter* prop_iter)
 function plank_area_type_get_type GType plank_area_type_get_type (void)
 function plank_badge_style_type_get_type GType plank_badge_style_type_get_type (void)
+function plank_calendar_icon_construct PlankCalendarIcon* plank_calendar_icon_construct (GType object_type)
+function plank_calendar_icon_draw void plank_calendar_icon_draw (cairo_t* cr, gint size, GDateTime* date)
+function plank_calendar_icon_get_type GType plank_calendar_icon_get_type (void)
+function plank_calendar_icon_ms_until_midnight guint plank_calendar_icon_ms_until_midnight (void)
+function plank_calendar_icon_new PlankCalendarIcon* plank_calendar_icon_new (void)
 function plank_check_version const gchar* plank_check_version (guint required_major, guint required_minor, guint required_micro)
 function plank_color_add_hue void plank_color_add_hue (PlankColor *self, gdouble val)
 function plank_color_brighten_val void plank_color_brighten_val (PlankColor *self, gdouble amount)
@@ -955,6 +960,9 @@ struct _PlankApplicationDockItemProvider 001 PlankDockItemProvider parent_instan
 struct _PlankApplicationDockItemProvider 002 PlankApplicationDockItemProviderPrivate * priv
 struct _PlankApplicationDockItemProviderClass 001 PlankDockItemProviderClass parent_class
 struct _PlankApplicationDockItemProviderClass 002 void (*app_opened) (PlankApplicationDockItemProvider* self, BamfApplication* app)
+struct _PlankCalendarIcon 001 GObject parent_instance
+struct _PlankCalendarIcon 002 PlankCalendarIconPrivate * priv
+struct _PlankCalendarIconClass 001 GObjectClass parent_class
 struct _PlankCompositedWindow 001 GtkWindow parent_instance
 struct _PlankCompositedWindow 002 PlankCompositedWindowPrivate * priv
 struct _PlankCompositedWindowClass 001 GtkWindowClass parent_class
