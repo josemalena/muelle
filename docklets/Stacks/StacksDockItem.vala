@@ -135,19 +135,29 @@ namespace Docky {
         return;
       }
 
+      // Como la pila de macOS: hasta tres archivos encimados, el más nuevo
+      // arriba y derecho; los de abajo se asoman ladeados, uno a cada lado.
       unowned Cairo.Context cr = surface.Context;
       var size = int.min (surface.Width, surface.Height);
       var depth = int.min (STACK_DEPTH, entries.size);
-      var item_size = (int) (size * 0.82);
-      var step = (size - item_size) / (double) int.max (1, STACK_DEPTH - 1);
+      var item_size = (int) (size * 0.80);
+      double[] angles = { 0.0, -0.13, 0.11 };
+      double[] shifts = { 0.0, -0.06, 0.06 };
 
       for (var i = depth - 1; i >= 0; i--) {
         var pixbuf = entries[i].load_pixbuf (item_size);
-        var x = (size - pixbuf.width) / 2.0;
-        // El de abajo de la pila (i alto) queda más abajo.
-        var y = size - item_size - (depth - 1 - i) * step + (item_size - pixbuf.height) / 2.0;
-        Gdk.cairo_set_source_pixbuf (cr, pixbuf, x, y);
+        cr.save ();
+        cr.translate (size / 2.0 + shifts[i] * size, size / 2.0 + size * 0.04);
+        cr.rotate (angles[i]);
+        // Una sombra suave para que se lea cada hoja de la pila.
+        if (depth > 1 && entries[i].content_type.has_prefix ("image/")) {
+          cr.set_source_rgba (0, 0, 0, 0.25);
+          cr.rectangle (-pixbuf.width / 2.0 + 1, -pixbuf.height / 2.0 + 2, pixbuf.width, pixbuf.height);
+          cr.fill ();
+        }
+        Gdk.cairo_set_source_pixbuf (cr, pixbuf, -pixbuf.width / 2.0, -pixbuf.height / 2.0);
         cr.paint ();
+        cr.restore ();
       }
     }
 
