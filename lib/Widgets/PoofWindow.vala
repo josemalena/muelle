@@ -51,7 +51,11 @@ namespace Plank
 		 */
 		public PoofWindow ()
 		{
-			GLib.Object (type: Gtk.WindowType.TOPLEVEL, type_hint: Gdk.WindowTypeHint.DOCK);
+			// POPUP y no TOPLEVEL: el gestor de ventanas no la ubica. Como
+			// ventana DOCK, Cinnamon (Muffin) la ponía en la esquina de arriba a
+			// la izquierda al mostrarla y no le hacía caso al move () de después:
+			// el humo salía allá y no donde se soltó el ícono.
+			GLib.Object (type: Gtk.WindowType.POPUP, type_hint: Gdk.WindowTypeHint.DOCK);
 		}
 		
 		construct
@@ -100,8 +104,10 @@ namespace Plank
 			start_time = GLib.get_monotonic_time ();
 			frame_time = start_time;
 						
-			show ();
+			// Primero se mueve y después se muestra: así aparece de una vez en su
+			// sitio, sin pasar por la esquina.
 			move (x - (poof_size / 2), y - (poof_size / 2));
+			show ();
 
 			animation_timer_id = Gdk.threads_add_timeout (16, () => {
 				frame_time = GLib.get_monotonic_time ();
