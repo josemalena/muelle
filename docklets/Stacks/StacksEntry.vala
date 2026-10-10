@@ -126,6 +126,25 @@ namespace Docky {
       });
     }
 
+    /**
+     * Lo que se ve de este archivo a un tamaño dado, como en macOS: la
+     * imagen misma si es una imagen (reducida, sin pasar por miniaturas), la
+     * miniatura si Nemo ya la hizo, o el ícono del tipo de archivo.
+     */
+    public Gdk.Pixbuf load_pixbuf (int size) {
+      if (content_type.has_prefix ("image/") && !icon.has_prefix ("/")) {
+        var path = file.get_path ();
+        if (path != null) {
+          try {
+            return new Gdk.Pixbuf.from_file_at_scale (path, size, size, true);
+          } catch (Error e) {
+            debug ("Stacks: sin vista previa de '%s': %s", path, e.message);
+          }
+        }
+      }
+      return DrawingService.load_icon (icon, size, size);
+    }
+
     static int compare_names (StacksEntry a, StacksEntry b) {
       return strcmp (a.name.collate_key_for_filename (), b.name.collate_key_for_filename ());
     }

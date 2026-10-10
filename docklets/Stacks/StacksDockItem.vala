@@ -142,7 +142,7 @@ namespace Docky {
       var step = (size - item_size) / (double) int.max (1, STACK_DEPTH - 1);
 
       for (var i = depth - 1; i >= 0; i--) {
-        var pixbuf = DrawingService.load_icon (entries[i].icon, item_size, item_size);
+        var pixbuf = entries[i].load_pixbuf (item_size);
         var x = (size - pixbuf.width) / 2.0;
         // El de abajo de la pila (i alto) queda más abajo.
         var y = size - item_size - (depth - 1 - i) * step + (item_size - pixbuf.height) / 2.0;

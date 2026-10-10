@@ -177,7 +177,7 @@ namespace Docky {
         var cell = new Cell ();
         cell.entry = entries[i];
         cell.label = entries[i].name;
-        cell.icon = DrawingService.load_icon (entries[i].icon, FAN_ICON, FAN_ICON);
+        cell.icon = entries[i].load_pixbuf (FAN_ICON);
         cells.add (cell);
         label_w = int.max (label_w, text_width (cell.label));
       }
@@ -244,7 +244,7 @@ namespace Docky {
         var cell = new Cell ();
         cell.entry = entries[i];
         cell.label = entries[i].name;
-        cell.icon = DrawingService.load_icon (entries[i].icon, GRID_ICON, GRID_ICON);
+        cell.icon = entries[i].load_pixbuf (GRID_ICON);
         var col = i % cols;
         var row = i / cols;
         var cx = GRID_PAD + col * GRID_CELL_W;

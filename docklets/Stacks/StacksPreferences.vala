@@ -80,9 +80,13 @@ namespace Docky {
       if (Folder != null && Folder != "")
         return GLib.File.new_for_uri (Folder);
 
+      // Si user-dirs no la define, o la pone en la carpeta personal (pasa:
+      // XDG_DOWNLOAD_DIR="$HOME/"), se usa ~/Downloads. La pila de la carpeta
+      // personal entera no es una pila de descargas.
+      var home = GLib.File.new_for_path (GLib.Environment.get_home_dir ());
       var downloads = GLib.Environment.get_user_special_dir (GLib.UserDirectory.DOWNLOAD);
-      if (downloads == null || downloads == "")
-        downloads = GLib.Path.build_filename (GLib.Environment.get_home_dir (), "Downloads");
+      if (downloads == null || downloads == "" || GLib.File.new_for_path (downloads).equal (home))
+        return home.get_child ("Downloads");
       return GLib.File.new_for_path (downloads);
     }
   }
