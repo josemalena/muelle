@@ -19,6 +19,10 @@ using Plank;
 
 namespace Docky {
   public class SeparatorDockItem : DockletItem {
+    // La raya de macOS: 25 % de opacidad y casi del alto del ícono.
+    const double LINE_ALPHA = 0.25;
+    const double LINE_INSET = 0.02;
+
     private ulong position_handler_id = 0;
     private ulong prefs_handler_id = 0;
     private ulong separator_prefs_handler_id = 0;
@@ -249,20 +253,22 @@ namespace Docky {
     }
 
     private void draw_line_separator (Cairo.Context cr, int size) {
-      cr.set_source_rgba (cached_color.red, cached_color.green, cached_color.blue, cached_color.alpha);
-      cr.set_line_width (2.0);
+      // Como el Dock de macOS: una raya de 1 px, tenue (25 %) y casi del alto
+      // del ícono, alineada al píxel para que no salga borrosa.
+      cr.set_source_rgba (cached_color.red, cached_color.green, cached_color.blue, LINE_ALPHA);
+      cr.set_line_width (1.0);
 
       bool horizontal = (cached_position == Gtk.PositionType.LEFT ||
                          cached_position == Gtk.PositionType.RIGHT);
 
       if (horizontal) {
-        double y = size / 2.0;
-        cr.move_to (size * 0.1, y);
-        cr.line_to (size * 0.9, y);
+        double y = Math.floor (size / 2.0) + 0.5;
+        cr.move_to (size * LINE_INSET, y);
+        cr.line_to (size * (1.0 - LINE_INSET), y);
       } else {
-        double x = size / 2.0;
-        cr.move_to (x, size * 0.1);
-        cr.line_to (x, size * 0.9);
+        double x = Math.floor (size / 2.0) + 0.5;
+        cr.move_to (x, size * LINE_INSET);
+        cr.line_to (x, size * (1.0 - LINE_INSET));
       }
 
       cr.stroke ();
