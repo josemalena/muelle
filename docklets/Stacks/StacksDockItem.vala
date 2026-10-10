@@ -313,11 +313,11 @@ namespace Docky {
     delegate void RadioChosen (int index);
 
     static void add_radio_group (Gee.ArrayList<Gtk.MenuItem> items, string[] labels, int active, owned RadioChosen chosen) {
-      // CheckMenuItem con draw_as_radio: el check de macOS, y no deja dos
-      // marcados porque cada uno solo enciende el suyo.
+      // CheckMenuItem, no radio: macOS marca la opción elegida con ✓ y deja
+      // las demás sin nada (el dibujo de la marca lo pone el tema GTK). Nunca
+      // quedan dos marcadas porque cada una solo enciende la suya.
       for (var i = 0; i < labels.length; i++) {
         var item = new Gtk.CheckMenuItem.with_label (labels[i]);
-        item.draw_as_radio = true;
         item.active = (i == active);
         var index = i;
         item.toggled.connect (() => {
