@@ -692,25 +692,7 @@ namespace Plank {
       unowned DefaultApplicationDockItemProvider? default_provider = (Container as DefaultApplicationDockItemProvider);
       var window_count = Helpers.window_count (App, default_provider);
 
-      if (default_provider != null
-          && !default_provider.Prefs.LockItems
-          && !is_window ()) {
-        var item = new Gtk.CheckMenuItem.with_mnemonic (_("_Keep in Dock"));
-        item.active = !(this is TransientDockItem);
-        item.activate.connect (() => pin_launcher ());
-        items.add (item);
-      }
-
       var event_time = Gtk.get_current_event_time ();
-      if (is_running () && window_count > 0) {
-        var item = create_menu_item ((window_count > 1 ? _("_Close All") : _("_Close")), "window-close-symbolic;;window-close");
-        if (Helpers.current_workspace_only (default_provider)) {
-          item.activate.connect (() => WindowControl.close_all_in_workspace (App, event_time));
-        } else {
-          item.activate.connect (() => WindowControl.close_all (App, event_time));
-        }
-        items.add (item);
-      }
 
 #if HAVE_DBUSMENU
       if (Quicklist != null) {
@@ -818,6 +800,45 @@ namespace Plank {
 
           items.add (window_item);
         }
+      }
+
+      // Como el Dock de macOS: «Options ▸» con «Keep in Dock» (la ✓ si está
+      // fijada) mientras la app está abierta, o «Remove from Dock» si está
+      // fijada y cerrada; y «Close», como el «Quit» de macOS, al final.
+      if (default_provider != null
+          && !default_provider.Prefs.LockItems
+          && !is_window ()) {
+        var options_menu = new Gtk.Menu ();
+        var pinned = !(this is TransientDockItem);
+        if (is_running ()) {
+          var keep = new Gtk.CheckMenuItem.with_mnemonic (_("_Keep in Dock"));
+          keep.active = pinned;
+          keep.activate.connect (() => pin_launcher ());
+          options_menu.append (keep);
+        } else {
+          var remove = new Gtk.MenuItem.with_mnemonic (_("_Remove from Dock"));
+          remove.activate.connect (() => pin_launcher ());
+          options_menu.append (remove);
+        }
+        options_menu.show_all ();
+
+        if (items.size > 0)
+          items.add (new Gtk.SeparatorMenuItem ());
+        var options = new Gtk.MenuItem.with_mnemonic (_("_Options"));
+        options.set_submenu (options_menu);
+        items.add (options);
+      }
+
+      if (is_running () && window_count > 0) {
+        if (items.size > 0)
+          items.add (new Gtk.SeparatorMenuItem ());
+        var item = create_menu_item ((window_count > 1 ? _("_Close All") : _("_Close")), "window-close-symbolic;;window-close");
+        if (Helpers.current_workspace_only (default_provider)) {
+          item.activate.connect (() => WindowControl.close_all_in_workspace (App, event_time));
+        } else {
+          item.activate.connect (() => WindowControl.close_all (App, event_time));
+        }
+        items.add (item);
       }
 
       return items;

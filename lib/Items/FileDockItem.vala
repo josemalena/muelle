@@ -279,20 +279,17 @@ namespace Plank {
 
       items.add (new Gtk.SeparatorMenuItem ());
 
-      unowned DefaultApplicationDockItemProvider? default_provider = (Container as DefaultApplicationDockItemProvider);
-      if (default_provider != null
-          && !default_provider.Prefs.LockItems) {
-        var delete_item = new Gtk.CheckMenuItem.with_mnemonic (_("_Keep in Dock"));
-        delete_item.active = true;
-        delete_item.activate.connect (() => delete ());
-        items.add (delete_item);
-      }
-
       var item = create_menu_item (_("_Open in File Browser"), "gtk-open");
       item.activate.connect (() => {
         launch ();
       });
       items.add (item);
+
+      var options = create_remove_options_item ();
+      if (options != null) {
+        items.add (new Gtk.SeparatorMenuItem ());
+        items.add (options);
+      }
 
       return items;
     }
@@ -396,17 +393,29 @@ namespace Plank {
       });
     }
 
+    /**
+     * Como el Dock de macOS: «Options ▸ Remove from Dock». Antes era una
+     * casilla «Keep in Dock» marcada que, al desmarcarla, lo quitaba. Con los
+     * ítems bloqueados (LockItems) no sale.
+     */
+    Gtk.MenuItem? create_remove_options_item () {
+      unowned DefaultApplicationDockItemProvider? default_provider = (Container as DefaultApplicationDockItemProvider);
+      if (default_provider == null || default_provider.Prefs.LockItems)
+        return null;
+
+      var options_menu = new Gtk.Menu ();
+      var remove = new Gtk.MenuItem.with_mnemonic (_("_Remove from Dock"));
+      remove.activate.connect (() => delete ());
+      options_menu.append (remove);
+      options_menu.show_all ();
+
+      var options = new Gtk.MenuItem.with_mnemonic (_("_Options"));
+      options.set_submenu (options_menu);
+      return options;
+    }
+
     Gee.ArrayList<Gtk.MenuItem> get_file_menu_items () {
       var items = new Gee.ArrayList<Gtk.MenuItem> ();
-
-      unowned DefaultApplicationDockItemProvider? default_provider = (Container as DefaultApplicationDockItemProvider);
-      if (default_provider != null
-          && !default_provider.Prefs.LockItems) {
-        var delete_item = new Gtk.CheckMenuItem.with_mnemonic (_("_Keep in Dock"));
-        delete_item.active = true;
-        delete_item.activate.connect (() => delete ());
-        items.add (delete_item);
-      }
 
       var item = create_menu_item (_("_Open"), "gtk-open");
       item.activate.connect (launch);
@@ -419,6 +428,12 @@ namespace Plank {
         LastClicked = GLib.get_monotonic_time ();
       });
       items.add (item);
+
+      var options = create_remove_options_item ();
+      if (options != null) {
+        items.add (new Gtk.SeparatorMenuItem ());
+        items.add (options);
+      }
 
       return items;
     }

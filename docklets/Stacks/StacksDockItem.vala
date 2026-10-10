@@ -295,6 +295,13 @@ namespace Docky {
 
       var options = new Gtk.MenuItem.with_label (_("Options"));
       var options_menu = new Gtk.Menu ();
+      // «Remove from Dock», como en macOS; con los ítems bloqueados no sale.
+      unowned DockController? controller = get_dock ();
+      if (controller != null && !controller.prefs.LockItems) {
+        var remove = new Gtk.MenuItem.with_label (_("Remove from Dock"));
+        remove.activate.connect (() => delete ());
+        options_menu.append (remove);
+      }
       var show_in_files = new Gtk.MenuItem.with_label (_("Show in Files"));
       show_in_files.activate.connect (open_folder);
       options_menu.append (show_in_files);
