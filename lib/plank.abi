@@ -68,6 +68,7 @@ enum PlankIndicatorStyleType 001 PLANK_INDICATOR_STYLE_TYPE_LEGACY
 enum PlankIndicatorStyleType 002 PLANK_INDICATOR_STYLE_TYPE_GLOW
 enum PlankIndicatorStyleType 003 PLANK_INDICATOR_STYLE_TYPE_CIRCLE
 enum PlankIndicatorStyleType 004 PLANK_INDICATOR_STYLE_TYPE_LINE
+enum PlankIndicatorStyleType 005 PLANK_INDICATOR_STYLE_TYPE_DOT
 enum PlankItemState 001 PLANK_ITEM_STATE_NORMAL = 1 << 0
 enum PlankItemState 002 PLANK_ITEM_STATE_ACTIVE = 1 << 1
 enum PlankItemState 003 PLANK_ITEM_STATE_URGENT = 1 << 2
@@ -504,6 +505,7 @@ function plank_dock_theme_get_ActiveTime gint plank_dock_theme_get_ActiveTime (P
 function plank_dock_theme_get_BadgeColor void plank_dock_theme_get_BadgeColor (PlankDockTheme* self, PlankColor * result)
 function plank_dock_theme_get_BadgeStyle PlankBadgeStyleType plank_dock_theme_get_BadgeStyle (PlankDockTheme* self)
 function plank_dock_theme_get_BadgeTextColor void plank_dock_theme_get_BadgeTextColor (PlankDockTheme* self, PlankColor * result)
+function plank_dock_theme_get_BlurRadius gdouble plank_dock_theme_get_BlurRadius (PlankDockTheme* self)
 function plank_dock_theme_get_BottomPadding gdouble plank_dock_theme_get_BottomPadding (PlankDockTheme* self)
 function plank_dock_theme_get_CascadeHide gboolean plank_dock_theme_get_CascadeHide (PlankDockTheme* self)
 function plank_dock_theme_get_ClickTime gint plank_dock_theme_get_ClickTime (PlankDockTheme* self)
@@ -516,6 +518,7 @@ function plank_dock_theme_get_HideTime gint plank_dock_theme_get_HideTime (Plank
 function plank_dock_theme_get_HorizPadding gdouble plank_dock_theme_get_HorizPadding (PlankDockTheme* self)
 function plank_dock_theme_get_IconShadowSize gdouble plank_dock_theme_get_IconShadowSize (PlankDockTheme* self)
 function plank_dock_theme_get_IndicatorColor void plank_dock_theme_get_IndicatorColor (PlankDockTheme* self, PlankColor * result)
+function plank_dock_theme_get_IndicatorOffset gdouble plank_dock_theme_get_IndicatorOffset (PlankDockTheme* self)
 function plank_dock_theme_get_IndicatorSize gdouble plank_dock_theme_get_IndicatorSize (PlankDockTheme* self)
 function plank_dock_theme_get_IndicatorStyle PlankIndicatorStyleType plank_dock_theme_get_IndicatorStyle (PlankDockTheme* self)
 function plank_dock_theme_get_ItemMoveTime gint plank_dock_theme_get_ItemMoveTime (PlankDockTheme* self)
@@ -537,6 +540,7 @@ function plank_dock_theme_set_ActiveTime void plank_dock_theme_set_ActiveTime (P
 function plank_dock_theme_set_BadgeColor void plank_dock_theme_set_BadgeColor (PlankDockTheme* self, PlankColor * value)
 function plank_dock_theme_set_BadgeStyle void plank_dock_theme_set_BadgeStyle (PlankDockTheme* self, PlankBadgeStyleType value)
 function plank_dock_theme_set_BadgeTextColor void plank_dock_theme_set_BadgeTextColor (PlankDockTheme* self, PlankColor * value)
+function plank_dock_theme_set_BlurRadius void plank_dock_theme_set_BlurRadius (PlankDockTheme* self, gdouble value)
 function plank_dock_theme_set_BottomPadding void plank_dock_theme_set_BottomPadding (PlankDockTheme* self, gdouble value)
 function plank_dock_theme_set_CascadeHide void plank_dock_theme_set_CascadeHide (PlankDockTheme* self, gboolean value)
 function plank_dock_theme_set_ClickTime void plank_dock_theme_set_ClickTime (PlankDockTheme* self, gint value)
@@ -549,6 +553,7 @@ function plank_dock_theme_set_HideTime void plank_dock_theme_set_HideTime (Plank
 function plank_dock_theme_set_HorizPadding void plank_dock_theme_set_HorizPadding (PlankDockTheme* self, gdouble value)
 function plank_dock_theme_set_IconShadowSize void plank_dock_theme_set_IconShadowSize (PlankDockTheme* self, gdouble value)
 function plank_dock_theme_set_IndicatorColor void plank_dock_theme_set_IndicatorColor (PlankDockTheme* self, PlankColor * value)
+function plank_dock_theme_set_IndicatorOffset void plank_dock_theme_set_IndicatorOffset (PlankDockTheme* self, gdouble value)
 function plank_dock_theme_set_IndicatorSize void plank_dock_theme_set_IndicatorSize (PlankDockTheme* self, gdouble value)
 function plank_dock_theme_set_IndicatorStyle void plank_dock_theme_set_IndicatorStyle (PlankDockTheme* self, PlankIndicatorStyleType value)
 function plank_dock_theme_set_ItemMoveTime void plank_dock_theme_set_ItemMoveTime (PlankDockTheme* self, gint value)
@@ -922,6 +927,10 @@ function plank_update_indicator_event_get_type GType plank_update_indicator_even
 function plank_value_get_dock_item_draw_value gpointer plank_value_get_dock_item_draw_value (const GValue* value)
 function plank_value_set_dock_item_draw_value void plank_value_set_dock_item_draw_value (GValue* value, gpointer v_object)
 function plank_value_take_dock_item_draw_value void plank_value_take_dock_item_draw_value (GValue* value, gpointer v_object)
+function plank_wallpaper_blur_construct PlankWallpaperBlur* plank_wallpaper_blur_construct (GType object_type)
+function plank_wallpaper_blur_get_blurred PlankSurface* plank_wallpaper_blur_get_blurred (PlankWallpaperBlur* self, GdkRectangle* monitor, gint radius)
+function plank_wallpaper_blur_get_type GType plank_wallpaper_blur_get_type (void)
+function plank_wallpaper_blur_new PlankWallpaperBlur* plank_wallpaper_blur_new (void)
 function plank_worker_add_task void plank_worker_add_task (PlankWorker* self, GThreadFunc func, gpointer func_target, PlankTaskPriority priority)
 function plank_worker_add_task_with_result void plank_worker_add_task_with_result (PlankWorker* self, GType g_type, GBoxedCopyFunc g_dup_func, GDestroyNotify g_destroy_func, PlankTaskFunc func, gpointer func_target, GDestroyNotify func_target_destroy_notify, PlankTaskPriority priority, GAsyncReadyCallback _callback_, gpointer _user_data_)
 function plank_worker_add_task_with_result_finish gpointer plank_worker_add_task_with_result_finish (PlankWorker* self, GAsyncResult* _res_, GError** error)
@@ -1140,6 +1149,9 @@ struct _PlankUnityClass 001 GObjectClass parent_class
 struct _PlankUnityClientIface 001 GTypeInterface parent_iface
 struct _PlankUnityClientIface 002 void (*update_launcher_entry) (PlankUnityClient* self, const gchar* sender_name, GVariant* parameters, gboolean is_retry)
 struct _PlankUnityClientIface 003 void (*remove_launcher_entry) (PlankUnityClient* self, const gchar* sender_name)
+struct _PlankWallpaperBlur 001 GObject parent_instance
+struct _PlankWallpaperBlur 002 PlankWallpaperBlurPrivate * priv
+struct _PlankWallpaperBlurClass 001 GObjectClass parent_class
 struct _PlankWorker 001 GObject parent_instance
 struct _PlankWorker 002 PlankWorkerPrivate * priv
 struct _PlankWorkerClass 001 GObjectClass parent_class

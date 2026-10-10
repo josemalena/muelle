@@ -77,7 +77,7 @@ namespace Docky {
       if (p.name == "Folder") {
         watch_folder ();
         reload ();
-      } else if (p.name == "SortBy" || p.name == "DisplayAs") {
+      } else if (p.name == "StackSortBy" || p.name == "DisplayAs") {
         reload ();
       }
     }
@@ -114,7 +114,7 @@ namespace Docky {
     void reload () {
       var folder = prefs.get_folder ();
       entries = StacksEntry.load (folder);
-      StacksEntry.sort (entries, prefs.SortBy);
+      StacksEntry.sort (entries, prefs.StackSortBy);
 
       Text = folder.get_basename ();
       Icon = DrawingService.get_icon_from_file (folder) ?? "folder";
@@ -271,7 +271,7 @@ namespace Docky {
       items.add (new TitledSeparatorMenuItem.no_line (_("Sort by")));
       add_radio_group (items, {
         _("Name"), _("Date Added"), _("Date Modified"), _("Date Created"), _("Kind")
-      }, (int) prefs.SortBy, (i) => { prefs.SortBy = (StacksSortBy) i; });
+      }, (int) prefs.StackSortBy, (i) => { prefs.StackSortBy = (StacksSortBy) i; });
 
       items.add (new TitledSeparatorMenuItem (_("Display as")));
       add_radio_group (items, { _("Folder"), _("Stack") },

@@ -51,8 +51,8 @@ namespace Docky {
     [Description (nick = "folder", blurb = "The folder shown by the stack, as a URI. Empty means the Downloads folder.")]
     public string Folder { get; set; default = ""; }
 
-    [Description (nick = "sort-by", blurb = "How the contents are sorted.")]
-    public StacksSortBy SortBy { get; set; default = StacksSortBy.DATE_ADDED; }
+    [Description (nick = "stack-sort-by", blurb = "How the contents are sorted.")]
+    public StacksSortBy StackSortBy { get; set; default = StacksSortBy.DATE_ADDED; }
 
     [Description (nick = "display-as", blurb = "Show the folder icon or a stack of its newest items.")]
     public StacksDisplayAs DisplayAs { get; set; default = StacksDisplayAs.STACK; }
@@ -68,7 +68,7 @@ namespace Docky {
     protected override void reset_properties () {
       base.reset_properties ();
       Folder = "";
-      SortBy = StacksSortBy.DATE_ADDED;
+      StackSortBy = StacksSortBy.DATE_ADDED;
       DisplayAs = StacksDisplayAs.STACK;
       ViewAs = StacksViewAs.FAN;
     }
