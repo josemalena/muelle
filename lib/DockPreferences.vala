@@ -111,6 +111,9 @@ namespace Plank {
     [Description (nick = "show-dock-item", blurb = "Whether to show the item for the dock itself.")]
     public bool ShowDockItem { get; set; }
 
+    [Description (nick = "minimize-into-icon", blurb = "Whether minimized windows go into their application's icon (otherwise into the end of the dock).")]
+    public bool MinimizeIntoIcon { get; set; }
+
     [Description (nick = "zoom-enabled", blurb = "Whether the dock will zoom when hovered.")]
     public bool ZoomEnabled { get; set; }
 

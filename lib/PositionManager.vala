@@ -400,6 +400,10 @@ namespace Plank {
       case "ZoomEnabled":
         prefs_zoom_changed ();
         break;
+      case "MinimizeIntoIcon":
+        // Where minimized windows go changed: tell every window again
+        controller.window.update_icon_regions ();
+        break;
       default:
         // Nothing important for us changed
         break;
@@ -2288,6 +2292,34 @@ namespace Plank {
       var draw_value = get_draw_value_for_item (item);
 
       window_scale_factor = controller.window.get_window ().get_scale_factor ();
+
+      if (!for_hidden && !controller.prefs.MinimizeIntoIcon) {
+        // Windows go into the end of the dock (where the macOS Dock keeps
+        // them when "minimize windows into application icon" is off): a
+        // box of icon size just inside the trailing edge of the background
+        var fin = Gdk.Rectangle ();
+        int lado = 2 * (int) Math.round (IconSize / 2.0);
+        fin.width = lado;
+        fin.height = lado;
+        switch (Position) {
+        default:
+        case Gtk.PositionType.BOTTOM:
+        case Gtk.PositionType.TOP:
+          fin.x = win_x + background_rect.x + background_rect.width - lado;
+          fin.y = (int) Math.round (draw_value.static_center.y - lado / 2.0) + win_y;
+          break;
+        case Gtk.PositionType.LEFT:
+        case Gtk.PositionType.RIGHT:
+          fin.x = (int) Math.round (draw_value.static_center.x - lado / 2.0) + win_x;
+          fin.y = win_y + background_rect.y + background_rect.height - lado;
+          break;
+        }
+        fin.x *= window_scale_factor;
+        fin.y *= window_scale_factor;
+        fin.width *= window_scale_factor;
+        fin.height *= window_scale_factor;
+        return fin;
+      }
 
       if (!for_hidden) {
         var region = Gdk.Rectangle ();

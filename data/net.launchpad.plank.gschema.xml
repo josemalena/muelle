@@ -188,6 +188,11 @@
 			<summary>Dock unhide delay</summary>
 			<description>Length of the delay before unhiding the dock, in milliseconds.</description>
 		</key>
+		<key name="minimize-into-icon" type="b">
+			<default>true</default>
+			<summary>Minimize windows into their application icon</summary>
+			<description>If true, minimized windows go into the icon of their application, as in the macOS Dock; if false they go into the end of the dock.</description>
+		</key>
 		<key name="zoom-enabled" type="b">
 			<default>false</default>
 			<summary>Zoom dock items when hovered</summary>
