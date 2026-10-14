@@ -40,18 +40,18 @@ namespace Docky {
   public class StacksPopup : Gtk.Window {
     public signal void closed ();
 
-    const int FAN_ICON = 52;
-    const int FAN_STEP = 60;
+    const int FAN_ICON = 56;
+    const int FAN_STEP = 64;
     const int FAN_MAX = 12;
-    const double FAN_RADIUS = 1100.0;
+    const double FAN_RADIUS = 2450.0;
     const int FAN_LABEL_GAP = 10;
 
-    const int GRID_ICON = 64;
-    const int GRID_CELL_W = 104;
-    const int GRID_CELL_H = 104;
+    const int GRID_ICON = 90;
+    const int GRID_CELL_W = 126;
+    const int GRID_CELL_H = 126;
     const int GRID_PAD = 16;
     const int GRID_TITLE_H = 40;
-    const int GRID_FOOTER_H = 34;
+    const int GRID_FOOTER_H = 14;
     const int ARROW = 12;
     const int MARGIN = 8;
 
@@ -226,7 +226,7 @@ namespace Docky {
     void layout_grid () {
       cells.clear ();
       var n = entries.size;
-      var cols = ((int) Math.ceil (Math.sqrt (n * 1.6))).clamp (3, 7);
+      var cols = ((int) Math.ceil (Math.sqrt (n * 1.6))).clamp (3, 8);
       cols = int.min (cols, int.max (1, n));
       var rows = (int) Math.ceil (n / (double) cols);
 
@@ -251,13 +251,11 @@ namespace Docky {
         var cy = GRID_TITLE_H + row * GRID_CELL_H;
         cell.hit = { cx + 2, cy + 2, GRID_CELL_W - 4, GRID_CELL_H - 4 };
         cell.icon_rect = { cx + (GRID_CELL_W - GRID_ICON) / 2, cy + 6, GRID_ICON, GRID_ICON };
-        cell.label_rect = { cx + 4, cy + 6 + GRID_ICON + 4, GRID_CELL_W - 8, 28 };
+        cell.label_rect = { cx + 2, cy + 6 + GRID_ICON + 4, GRID_CELL_W - 4, 26 };
         cells.add (cell);
       }
 
-      var footer_label = _("Open in Files");
-      var fw = text_width (footer_label) + 24;
-      footer_rect = { width_px - GRID_PAD - fw, GRID_TITLE_H + grid_view_h + 6, fw, GRID_FOOTER_H - 12 };
+      footer_rect = { 0, 0, 0, 0 };
     }
 
     // ── Dibujo ──────────────────────────────────────────────────────────────
@@ -329,13 +327,6 @@ namespace Docky {
         draw_text (cr, cell.label, cell.label_rect, Pango.Alignment.CENTER, false, 2);
       }
       cr.restore ();
-
-      // «Open in Files» al pie.
-      var footer_hot = (hovered == -2);
-      rounded_rect (cr, footer_rect.x, footer_rect.y, footer_rect.width, footer_rect.height, 6);
-      cr.set_source_rgba (1, 1, 1, footer_hot ? 0.22 : 0.10);
-      cr.fill ();
-      draw_text (cr, _("Open in Files"), footer_rect, Pango.Alignment.CENTER, false, 1);
     }
 
     int text_width (string text) {
