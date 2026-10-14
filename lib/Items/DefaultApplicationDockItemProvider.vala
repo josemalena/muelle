@@ -24,7 +24,13 @@ namespace Plank {
   public class DefaultApplicationDockItemProvider : ApplicationDockItemProvider {
     public DockPreferences Prefs { get; construct; }
 
+    // How many closed applications the dock keeps with "show-recent-apps"
+    const int MAX_RECENTS = 3;
+
     bool current_workspace_only;
+
+    // Launchers of the recently closed applications, oldest first
+    Gee.ArrayList<string> recents = new Gee.ArrayList<string> ();
 
     /**
      * Creates the default container for dock items.
@@ -40,6 +46,7 @@ namespace Plank {
     {
       Prefs.notify["CurrentWorkspaceOnly"].connect (handle_setting_changed);
       Prefs.notify["PinnedOnly"].connect (handle_pinned_only_changed);
+      Prefs.notify["ShowRecent"].connect (handle_show_recent_changed);
 
       WindowControl.get_wnck_screen ().window_opened.connect_after (handle_window_opened);
 
@@ -52,6 +59,7 @@ namespace Plank {
     ~DefaultApplicationDockItemProvider () {
       Prefs.notify["CurrentWorkspaceOnly"].disconnect (handle_setting_changed);
       Prefs.notify["PinnedOnly"].disconnect (handle_pinned_only_changed);
+      Prefs.notify["ShowRecent"].disconnect (handle_show_recent_changed);
 
       WindowControl.get_wnck_screen ().window_opened.disconnect (handle_window_opened);
 
@@ -124,6 +132,11 @@ namespace Plank {
       Matcher.get_default ().set_favorites (favs);
 
       match_running_applications ();
+
+      if (Prefs.ShowRecent) {
+        load_recents ();
+        add_recent_items ();
+      }
     }
 
     protected override void app_opened (Bamf.Application app) {
@@ -159,9 +172,121 @@ namespace Plank {
     }
 
     void app_closed (DockItem item) {
-      if (item is TransientDockItem
-          && !(((TransientDockItem) item).has_unity_info ()))
-        remove (item);
+      unowned TransientDockItem? transient = (item as TransientDockItem);
+      if (transient == null || transient.has_unity_info ())
+        return;
+
+      // A closed application with a launcher stays in the dock, without
+      // windows, as a recent application
+      if (Prefs.ShowRecent && !Prefs.PinnedOnly && transient.Launcher != "") {
+        remember_recent (transient.Launcher);
+        return;
+      }
+
+      remove (item);
+    }
+
+    protected override bool is_recent_item (TransientDockItem item) {
+      return Prefs.ShowRecent && !Prefs.PinnedOnly && recents.contains (item.Launcher);
+    }
+
+    /**
+     * Forgets a recent application: it leaves the dock and the list.
+     */
+    public void remove_recent (TransientDockItem item) {
+      recents.remove (item.Launcher);
+      save_recents ();
+      remove (item);
+    }
+
+    File recents_file () {
+      return LaunchersDir.get_parent ().get_child ("recent-apps");
+    }
+
+    void load_recents () {
+      recents.clear ();
+
+      try {
+        string contents;
+        FileUtils.get_contents (recents_file ().get_path (), out contents);
+        foreach (var line in contents.split ("\n")) {
+          var launcher = line.strip ();
+          if (launcher != "" && !recents.contains (launcher))
+            recents.add (launcher);
+        }
+      } catch (Error e) {
+        // No list yet: nothing is recent
+      }
+
+      while (recents.size > MAX_RECENTS)
+        recents.remove_at (0);
+    }
+
+    void save_recents () {
+      try {
+        FileUtils.set_contents (recents_file ().get_path (), string.joinv ("\n", recents.to_array ()) + "\n");
+      } catch (Error e) {
+        warning ("Could not save the recent applications: %s", e.message);
+      }
+    }
+
+    void remember_recent (string launcher) {
+      recents.remove (launcher);
+      recents.add (launcher);
+
+      // The oldest ones leave the dock, unless they are running again
+      while (recents.size > MAX_RECENTS) {
+        var oldest = recents.remove_at (0);
+        foreach (var element in internal_elements) {
+          unowned TransientDockItem? item = (element as TransientDockItem);
+          if (item != null && item.Launcher == oldest && !item.is_running ()) {
+            remove (item);
+            break;
+          }
+        }
+      }
+
+      save_recents ();
+    }
+
+    void add_recent_items () {
+      if (!Prefs.ShowRecent || Prefs.PinnedOnly)
+        return;
+
+      var items = new Gee.ArrayList<DockElement> ();
+      foreach (var launcher in recents) {
+        // Already there: pinned, or running
+        if (item_for_uri (launcher) != null)
+          continue;
+        if (!File.new_for_uri (launcher).query_exists ())
+          continue;
+
+        items.add (new TransientDockItem.with_launcher (launcher));
+      }
+
+      add_all (items);
+    }
+
+    void remove_recent_items () {
+
+      var items = new Gee.ArrayList<DockElement> ();
+
+      foreach (var element in internal_elements) {
+        unowned TransientDockItem? item = (element as TransientDockItem);
+        if (item != null && !item.is_running () && !item.has_unity_info ())
+          items.add (element);
+      }
+
+      remove_all (items);
+    }
+
+    void handle_show_recent_changed () {
+      if (Prefs.ShowRecent) {
+        load_recents ();
+        add_recent_items ();
+      } else {
+        remove_recent_items ();
+      }
     }
 
     void connect_wnck () {
@@ -355,6 +480,15 @@ namespace Plank {
           app_item.move_merged_applications_to (new_item);
 
           replace (new_item, item);
+
+          // A pinned item belongs to the left of the separator
+          foreach (var element in internal_elements) {
+            if (is_separator_docklet (element)) {
+              if (internal_elements.index_of (new_item) > internal_elements.index_of (element))
+                move_to (new_item, element);
+              break;
+            }
+          }
         }
       } else {
         if (!(app_item.is_running () || app_item.has_unity_info ()))

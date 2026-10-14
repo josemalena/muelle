@@ -350,6 +350,14 @@ namespace Plank {
       return false;
     }
 
+    /**
+     * Whether the given element is the separator docklet.
+     */
+    internal static bool is_separator_docklet (DockElement element) {
+      unowned DockletItem? docklet = (element as DockletItem);
+      return docklet != null && docklet.Launcher == "docklet://separator";
+    }
+
     bool check_anchor_item (DockElement element, DefaultApplicationDockItemProvider provider) {
       if ((element is DockletItem && provider.Prefs.AnchorDocklets) ||
           (element is FileDockItem && provider.Prefs.AnchorFiles)) {
@@ -381,6 +389,14 @@ namespace Plank {
             if (check_anchor_item (internal_elements[i], provider)) {
               insert_pos = i;
             } else {
+              break;
+            }
+          }
+          // Like the macOS Dock, unpinned applications go to the right of the
+          // separator, before the files (Downloads, Trash)
+          for (int i = insert_pos; i < internal_elements.size; i++) {
+            if (is_separator_docklet (internal_elements[i])) {
+              insert_pos = i + 1;
               break;
             }
           }

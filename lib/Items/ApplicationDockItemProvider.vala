@@ -290,6 +290,14 @@ namespace Plank {
       item_window_added (item);
     }
 
+    /**
+     * Whether a transient item without an application is kept as a recent
+     * application, so it must stay when the unity information goes away.
+     */
+    protected virtual bool is_recent_item (TransientDockItem item) {
+      return false;
+    }
+
     public void remove_launcher_entry (string sender_name) {
       // Reset item since there is no new NameOwner
       foreach (var item in internal_elements) {
@@ -305,7 +313,7 @@ namespace Plank {
         // Remove item which only exists because of the presence of
         // this removed LauncherEntry interface
         unowned TransientDockItem? transient_item = item as TransientDockItem;
-        if (transient_item != null && transient_item.App == null)
+        if (transient_item != null && transient_item.App == null && !is_recent_item (transient_item))
           remove (transient_item);
 
         break;
@@ -347,7 +355,8 @@ namespace Plank {
         // because of the presence of this LauncherEntry interface
         unowned TransientDockItem? transient_item = current_item as TransientDockItem;
         if (transient_item != null && transient_item.App == null
-            && !(transient_item.has_unity_info ()))
+            && !(transient_item.has_unity_info ())
+            && !is_recent_item (transient_item))
           remove (transient_item);
 
         return;

@@ -188,6 +188,11 @@
 			<summary>Dock unhide delay</summary>
 			<description>Length of the delay before unhiding the dock, in milliseconds.</description>
 		</key>
+		<key name="show-recent-apps" type="b">
+			<default>false</default>
+			<summary>Keep recently closed applications in the dock</summary>
+			<description>If true, the last three unpinned applications that were closed stay in the dock as items without windows, so they can be opened again, as in the macOS Dock.</description>
+		</key>
 		<key name="minimize-into-icon" type="b">
 			<default>true</default>
 			<summary>Minimize windows into their application icon</summary>

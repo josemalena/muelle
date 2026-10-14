@@ -815,6 +815,15 @@ namespace Plank {
           keep.active = pinned;
           keep.activate.connect (() => pin_launcher ());
           options_menu.append (keep);
+        } else if (this is TransientDockItem) {
+          // A recent application: it can be kept or forgotten
+          var keep = new Gtk.MenuItem.with_mnemonic (_("_Keep in Dock"));
+          keep.activate.connect (() => pin_launcher ());
+          options_menu.append (keep);
+
+          var forget = new Gtk.MenuItem.with_mnemonic (_("_Remove from Dock"));
+          forget.activate.connect (() => default_provider.remove_recent ((TransientDockItem) this));
+          options_menu.append (forget);
         } else {
           var remove = new Gtk.MenuItem.with_mnemonic (_("_Remove from Dock"));
           remove.activate.connect (() => pin_launcher ());
