@@ -75,6 +75,14 @@ namespace Plank {
 
     Gee.ArrayList<string>? drag_data = null;
 
+    // Se soltó un ícono del propio dock sobre la Papelera (drag_drop → drag_end)
+    bool drop_on_trash = false;
+
+    static bool is_trash_docklet (DockItem item) {
+      unowned DockletItem? docklet = (item as DockletItem);
+      return docklet != null && docklet.Launcher == "docklet://trash";
+    }
+
     // Cache for can_accept_drop results to avoid repeated I/O during drag motion
     unowned DockItem? cached_drop_item = null;
     bool cached_drop_result = false;
@@ -221,6 +229,7 @@ namespace Plank {
 
       InternalDragActive = true;
       drag_canceled = false;
+      drop_on_trash = false;
 
       if (proxy_window != null) {
         enable_drag_to (window);
@@ -301,12 +310,22 @@ namespace Plank {
         drag_hover_timer_id = 0U;
       }
 
-      if (drag_data == null)
-        return true;
-
       unowned DockWindow window = controller.window;
       unowned DockItem? item = window.HoveredItem;
       unowned DockItemProvider? provider = window.HoveredItemProvider;
+
+      // Un ícono del propio dock soltado sobre la Papelera se quita del dock
+      // (lo hace drag_end); nunca se manda su destino (una carpeta, por ejemplo)
+      // a la Papelera de archivos.
+      if (InternalDragActive && DragItem != null && item != null && item != DragItem
+          && is_trash_docklet (item)) {
+        drop_on_trash = true;
+        ExternalDragActive = false;
+        return true;
+      }
+
+      if (drag_data == null)
+        return true;
 
       if (DragNeedsCheck && item != null && item.can_accept_drop (drag_data))
         item.accept_drop (drag_data);
@@ -329,7 +348,7 @@ namespace Plank {
 
       if (!drag_canceled && DragItem != null) {
         hide_manager.update_hovered ();
-        if (!hide_manager.Hovered) {
+        if (!hide_manager.Hovered || drop_on_trash) {
           if (DragItem.can_be_removed ()) {
             // Remove from dock
             unowned ApplicationDockItem? app_item = (DragItem as ApplicationDockItem);
@@ -357,6 +376,7 @@ namespace Plank {
 
       InternalDragActive = false;
       DragItem = null;
+      drop_on_trash = false;
 
       controller.window.notify["HoveredItem"].disconnect (hovered_item_changed);
 
@@ -488,8 +508,10 @@ namespace Plank {
     void hovered_item_changed () {
       unowned DockItem hovered_item = controller.window.HoveredItem;
 
+      // Sobre la Papelera el ícono arrastrado no se reordena: se queda donde
+      // estaba para que, al soltar, se quite del dock (ver drag_drop)
       if (InternalDragActive && DragItem != null && hovered_item != null
-          && DragItem != hovered_item
+          && DragItem != hovered_item && !is_trash_docklet (hovered_item)
           && DragItem.Container == hovered_item.Container) {
         DragItem.Container.move_to (DragItem, hovered_item);
       }
