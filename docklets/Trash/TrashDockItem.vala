@@ -41,6 +41,9 @@ namespace Docky {
     private const uint UPDATE_DEBOUNCE_DELAY = 200U;
 
     private Gee.ArrayList<FileMonitor> trash_monitors;
+    // La Papelera de macOS de los discos externos: <volumen>/.Trashes/<uid>
+    private Gee.ArrayList<FileMonitor> macos_monitors;
+    private VolumeMonitor? volume_monitor = null;
     private File trash;
     private Canberra.Context? sound_context;
     private uint update_timer_id = 0;
@@ -61,17 +64,23 @@ namespace Docky {
     {
       trash = environment_is_session_desktop(XdgSessionDesktop.KDE) ? File.new_for_uri(KDE_TRASH_URI) : File.new_for_uri(TRASH_URI);
       trash_monitors = new Gee.ArrayList<FileMonitor> ();
+      macos_monitors = new Gee.ArrayList<FileMonitor> ();
 
       notify["Container"].connect(handle_container_changed);
 
       Icon = "user-trash";
       setup_monitor();
+      setup_macos_monitors();
+      volume_monitor = VolumeMonitor.get();
+      volume_monitor.mount_added.connect(handle_mounts_changed);
+      volume_monitor.mount_removed.connect(handle_mounts_changed);
       update();
     }
 
     ~TrashDockItem() {
       stop_async_operations();
       cleanup_monitor();
+      cleanup_macos_monitors();
       remove_update_timer();
     }
 
@@ -85,6 +94,7 @@ namespace Docky {
     private void removed_from_dock() {
       stop_async_operations();
       cleanup_monitor();
+      cleanup_macos_monitors();
       remove_update_timer();
     }
 
@@ -134,6 +144,90 @@ namespace Docky {
       } catch (GLib.Error e) {
         warning("Could not start file monitor for trash: %s", e.message);
       }
+    }
+
+    // ── Papelera de macOS (<volumen>/.Trashes/<uid>) ──────────────────────
+    // GIO solo conoce .Trash-<uid> y .Trash/<uid>; la de macOS se suma aparte.
+
+    private static bool is_hidden_apple_name(string name) {
+      return name.has_prefix("._") || name == ".DS_Store";
+    }
+
+    private static Gee.ArrayList<File> get_macos_trash_dirs() {
+      var dirs = new Gee.ArrayList<File> ();
+      var seen = new Gee.ArrayList<string> ();
+      string uid = "%u".printf((uint) Posix.getuid());
+
+      foreach (var mount in VolumeMonitor.get().get_mounts()) {
+        string? root = mount.get_root().get_path();
+        if (root == null) {
+          continue;
+        }
+
+        string path = Path.build_filename(root, ".Trashes", uid);
+        Posix.Stat st;
+        if (Posix.stat(path, out st) != 0 || !Posix.S_ISDIR(st.st_mode)) {
+          continue;
+        }
+
+        // /Volumes/X puede ser un bind de /media/…/X: el mismo disco una vez
+        string key = "%lld:%lld".printf((int64) st.st_dev, (int64) st.st_ino);
+        if (seen.contains(key)) {
+          continue;
+        }
+        seen.add(key);
+        dirs.add(File.new_for_path(path));
+      }
+      return dirs;
+    }
+
+    private static uint32 count_macos_trash_items() {
+      uint32 count = 0;
+      foreach (var dir in get_macos_trash_dirs()) {
+        try {
+          var en = dir.enumerate_children(FileAttribute.STANDARD_NAME,
+                                          FileQueryInfoFlags.NOFOLLOW_SYMLINKS);
+          FileInfo? info = null;
+          while ((info = en.next_file()) != null) {
+            if (!is_hidden_apple_name(info.get_name())) {
+              count++;
+            }
+          }
+          en.close();
+        } catch (GLib.Error e) {
+          warning("Could not read macOS trash '%s': %s", dir.get_path(), e.message);
+        }
+      }
+      return count;
+    }
+
+    private void setup_macos_monitors() {
+      cleanup_macos_monitors();
+      foreach (var dir in get_macos_trash_dirs()) {
+        try {
+          var monitor = dir.monitor_directory(0);
+          monitor.changed.connect(trash_changed);
+          macos_monitors.add(monitor);
+        } catch (GLib.Error e) {
+          warning("Could not start file monitor for macOS trash: %s", e.message);
+        }
+      }
+    }
+
+    private void cleanup_macos_monitors() {
+      foreach (var monitor in macos_monitors) {
+        monitor.changed.disconnect(trash_changed);
+        monitor.cancel();
+      }
+      macos_monitors.clear();
+    }
+
+    private void handle_mounts_changed() {
+      if (removed) {
+        return;
+      }
+      setup_macos_monitors();
+      schedule_update();
     }
 
     private void cleanup_monitor() {
@@ -218,6 +312,25 @@ namespace Docky {
 
         if (removed || cancellable.is_cancelled()) {
           return;
+        }
+
+        // Lo de las Papeleras de macOS de discos externos también cuenta
+        // (corre aparte: leer un disco lento no bloquea el dock)
+        uint32 macos_count = 0;
+        try {
+          yield Worker.get_default().add_task_with_result<void*> (() => {
+            macos_count = count_macos_trash_items();
+            return null;
+          }, TaskPriority.DEFAULT);
+        } catch (GLib.Error e) {
+          warning("Could not count macOS trash items: %s", e.message);
+        }
+        if (removed || cancellable.is_cancelled()) {
+          return;
+        }
+        if (macos_count > 0) {
+          item_count += macos_count;
+          icon_name = "user-trash-full";
         }
 
         last_item_count = item_count;
@@ -493,12 +606,19 @@ namespace Docky {
       foreach (var monitor in trash_monitors) {
         monitor.changed.disconnect(trash_changed);
       }
+      foreach (var monitor in macos_monitors) {
+        monitor.changed.disconnect(trash_changed);
+      }
 
       Worker.get_default().add_task_with_result.begin<void*> (() => {
         if (environment_is_session_desktop(XdgSessionDesktop.KDE)) {
           delete_kde_trash_files();
         } else {
           delete_children_recursive(trash);
+        }
+        // También se vacían las Papeleras de macOS de los discos externos
+        foreach (var dir in get_macos_trash_dirs()) {
+          delete_children_recursive(dir);
         }
         return null;
       }, TaskPriority.HIGH, () => {
@@ -507,6 +627,9 @@ namespace Docky {
         }
 
         foreach (var monitor in trash_monitors) {
+          monitor.changed.connect(trash_changed);
+        }
+        foreach (var monitor in macos_monitors) {
           monitor.changed.connect(trash_changed);
         }
         play_event_sound("trash-empty");
