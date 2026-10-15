@@ -393,11 +393,25 @@ namespace Plank {
             }
           }
           // Like the macOS Dock, unpinned applications go to the right of the
-          // separator, before the files (Downloads, Trash)
-          for (int i = insert_pos; i < internal_elements.size; i++) {
+          // separator, before the files (Downloads, Trash). With a second
+          // separator before the files they go between the two: pinned
+          // applications | separator | unpinned applications | separator | files
+          int separators = 0;
+          int last_separator = -1;
+          for (int i = 0; i < internal_elements.size; i++) {
             if (is_separator_docklet (internal_elements[i])) {
-              insert_pos = i + 1;
-              break;
+              separators++;
+              last_separator = i;
+            }
+          }
+          if (separators >= 2) {
+            insert_pos = last_separator;
+          } else {
+            for (int i = insert_pos; i < internal_elements.size; i++) {
+              if (is_separator_docklet (internal_elements[i])) {
+                insert_pos = i + 1;
+                break;
+              }
             }
           }
           debug ("Inserting unpinned item '%s' at position %d (before docklets)", element.describe (), insert_pos);
