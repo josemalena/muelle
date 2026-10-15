@@ -108,7 +108,37 @@ namespace Plank {
         }
       }
 
+      hide_empty_second_separator ();
+
       base.update_visible_elements ();
+    }
+
+    /**
+     * With two separators (pinned | unpinned applications | files), the second
+     * one only shows while a running unpinned application sits between the two; otherwise the dock
+     * keeps a single separator. Only IsAttached changes: dock-items is untouched.
+     */
+    void hide_empty_second_separator () {
+      int first = -1;
+      int last = -1;
+      for (int i = 0; i < internal_elements.size; i++) {
+        if (is_separator_docklet (internal_elements[i])) {
+          if (first < 0)
+            first = i;
+          last = i;
+        }
+      }
+      if (first < 0 || first == last)
+        return;
+
+      bool between = false;
+      for (int i = first + 1; i < last; i++) {
+        if (internal_elements[i] is TransientDockItem && internal_elements[i].IsAttached) {
+          between = true;
+          break;
+        }
+      }
+      internal_elements[last].IsAttached = between;
     }
 
     protected override void update_visible_elements () {
