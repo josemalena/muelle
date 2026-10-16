@@ -243,7 +243,7 @@ namespace Plank {
 
       if (separator_regexp == null) {
         try {
-          separator_regexp = new Regex ("separator(-\\d+)?\\.dockitem");
+          separator_regexp = new Regex ("separator(-[A-Za-z0-9_]+)?\\.dockitem");
         } catch (RegexError e) {
           _is_separator = false;
           return false;

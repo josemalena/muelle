@@ -115,7 +115,7 @@ namespace Plank {
 
     /**
      * With two separators (pinned | unpinned applications | files), the second
-     * one only shows while a running unpinned application sits between the two; otherwise the dock
+     * one only shows with show-recent-apps on and while an unpinned application sits between the two; otherwise the dock
      * keeps a single separator. Only IsAttached changes: dock-items is untouched.
      */
     void hide_empty_second_separator () {
@@ -131,8 +131,9 @@ namespace Plank {
       if (first < 0 || first == last)
         return;
 
+      // Sin apps recientes (show-recent-apps = false) el segundo separador no se muestra
       bool between = false;
-      for (int i = first + 1; i < last; i++) {
+      for (int i = first + 1; Prefs.ShowRecent && i < last; i++) {
         if (internal_elements[i] is TransientDockItem && internal_elements[i].IsAttached) {
           between = true;
           break;
