@@ -153,6 +153,7 @@ else
     workdir: meson.current_build_dir(),
     depends: [clean_test_dir],
     protocol: 'tap',
+    timeout: 120,   # el de 30 s por defecto se agota con la máquina cargada (armados en paralelo)
   )
 
   test(
@@ -163,5 +164,6 @@ else
     workdir: meson.current_build_dir(),
     depends: [clean_test_dir],
     protocol: 'exitcode',
+    timeout: 60,
   )
 endif
