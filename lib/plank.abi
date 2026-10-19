@@ -313,6 +313,7 @@ function plank_dock_element_get_LastMove gint64 plank_dock_element_get_LastMove 
 function plank_dock_element_get_LastScrolled gint64 plank_dock_element_get_LastScrolled (PlankDockElement* self)
 function plank_dock_element_get_LastUrgent gint64 plank_dock_element_get_LastUrgent (PlankDockElement* self)
 function plank_dock_element_get_LastValid gint64 plank_dock_element_get_LastValid (PlankDockElement* self)
+function plank_dock_element_get_LaunchBounceStart gint64 plank_dock_element_get_LaunchBounceStart (PlankDockElement* self)
 function plank_dock_element_get_RemoveTime gint64 plank_dock_element_get_RemoveTime (PlankDockElement* self)
 function plank_dock_element_get_ScrolledAnimation PlankAnimationType plank_dock_element_get_ScrolledAnimation (PlankDockElement* self)
 function plank_dock_element_get_Text const gchar* plank_dock_element_get_Text (PlankDockElement* self)
@@ -321,6 +322,7 @@ function plank_dock_element_get_drop_text gchar* plank_dock_element_get_drop_tex
 function plank_dock_element_get_menu_items GeeArrayList* plank_dock_element_get_menu_items (PlankDockElement* self)
 function plank_dock_element_get_type GType plank_dock_element_get_type (void)
 function plank_dock_element_hovered void plank_dock_element_hovered (PlankDockElement* self)
+function plank_dock_element_is_launching gboolean plank_dock_element_is_launching (PlankDockElement* self)
 function plank_dock_element_on_clicked PlankAnimationType plank_dock_element_on_clicked (PlankDockElement* self, PlankPopupButton button, GdkModifierType mod, guint32 event_time)
 function plank_dock_element_on_hovered PlankAnimationType plank_dock_element_on_hovered (PlankDockElement* self)
 function plank_dock_element_on_scrolled PlankAnimationType plank_dock_element_on_scrolled (PlankDockElement* self, GdkScrollDirection direction, GdkModifierType mod, guint32 event_time)
@@ -340,6 +342,7 @@ function plank_dock_element_set_LastMove void plank_dock_element_set_LastMove (P
 function plank_dock_element_set_LastScrolled void plank_dock_element_set_LastScrolled (PlankDockElement* self, gint64 value)
 function plank_dock_element_set_LastUrgent void plank_dock_element_set_LastUrgent (PlankDockElement* self, gint64 value)
 function plank_dock_element_set_LastValid void plank_dock_element_set_LastValid (PlankDockElement* self, gint64 value)
+function plank_dock_element_set_LaunchBounceStart void plank_dock_element_set_LaunchBounceStart (PlankDockElement* self, gint64 value)
 function plank_dock_element_set_RemoveTime void plank_dock_element_set_RemoveTime (PlankDockElement* self, gint64 value)
 function plank_dock_element_set_ScrolledAnimation void plank_dock_element_set_ScrolledAnimation (PlankDockElement* self, PlankAnimationType value)
 function plank_dock_element_set_Text void plank_dock_element_set_Text (PlankDockElement* self, const gchar* value)
@@ -999,16 +1002,17 @@ struct _PlankDockControllerClass 001 PlankDockContainerClass parent_class
 struct _PlankDockElement 001 GObject parent_instance
 struct _PlankDockElement 002 PlankDockElementPrivate * priv
 struct _PlankDockElementClass 001 GObjectClass parent_class
-struct _PlankDockElementClass 002 PlankAnimationType (*on_clicked) (PlankDockElement* self, PlankPopupButton button, GdkModifierType mod, guint32 event_time)
-struct _PlankDockElementClass 003 PlankAnimationType (*on_hovered) (PlankDockElement* self)
-struct _PlankDockElementClass 004 PlankAnimationType (*on_scrolled) (PlankDockElement* self, GdkScrollDirection direction, GdkModifierType mod, guint32 event_time)
-struct _PlankDockElementClass 005 GeeArrayList* (*get_menu_items) (PlankDockElement* self)
-struct _PlankDockElementClass 006 gchar* (*get_drop_text) (PlankDockElement* self)
-struct _PlankDockElementClass 007 gboolean (*can_be_removed) (PlankDockElement* self)
-struct _PlankDockElementClass 008 gboolean (*can_accept_drop) (PlankDockElement* self, GeeArrayList* uris)
-struct _PlankDockElementClass 009 gboolean (*accept_drop) (PlankDockElement* self, GeeArrayList* uris)
-struct _PlankDockElementClass 010 gchar* (*unique_id) (PlankDockElement* self)
-struct _PlankDockElementClass 011 void (*reset_buffers) (PlankDockElement* self)
+struct _PlankDockElementClass 002 gboolean (*is_launching) (PlankDockElement* self)
+struct _PlankDockElementClass 003 PlankAnimationType (*on_clicked) (PlankDockElement* self, PlankPopupButton button, GdkModifierType mod, guint32 event_time)
+struct _PlankDockElementClass 004 PlankAnimationType (*on_hovered) (PlankDockElement* self)
+struct _PlankDockElementClass 005 PlankAnimationType (*on_scrolled) (PlankDockElement* self, GdkScrollDirection direction, GdkModifierType mod, guint32 event_time)
+struct _PlankDockElementClass 006 GeeArrayList* (*get_menu_items) (PlankDockElement* self)
+struct _PlankDockElementClass 007 gchar* (*get_drop_text) (PlankDockElement* self)
+struct _PlankDockElementClass 008 gboolean (*can_be_removed) (PlankDockElement* self)
+struct _PlankDockElementClass 009 gboolean (*can_accept_drop) (PlankDockElement* self, GeeArrayList* uris)
+struct _PlankDockElementClass 010 gboolean (*accept_drop) (PlankDockElement* self, GeeArrayList* uris)
+struct _PlankDockElementClass 011 gchar* (*unique_id) (PlankDockElement* self)
+struct _PlankDockElementClass 012 void (*reset_buffers) (PlankDockElement* self)
 struct _PlankDockItem 001 PlankDockElement parent_instance
 struct _PlankDockItem 002 PlankDockItemPrivate * priv
 struct _PlankDockItem 003 PlankDockItemDrawValue* draw_value
