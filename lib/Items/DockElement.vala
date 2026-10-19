@@ -87,6 +87,18 @@ namespace Plank {
     public int64 LastClicked { get; protected set; }
 
     /**
+     * When the item started a launch that keeps bouncing until the application opens (0 = none).
+     */
+    public int64 LaunchBounceStart { get; protected set; }
+
+    /**
+     * Whether the icon is still doing its launch bounce. Items that do not launch anything never do.
+     */
+    public virtual bool is_launching () {
+      return false;
+    }
+
+    /**
      * The last time the item was hovered.
      */
     public int64 LastHovered { get; protected set; }

@@ -649,6 +649,18 @@ namespace Plank {
         }
       }
 
+      // the launch bounce: one bounce of LaunchBounceTime, repeated until the application opens
+      if (screen_is_composited && item.is_launching ()) {
+        var period = theme.LaunchBounceTime * 1000;
+        if (period > 0) {
+          var elapsed = int64.max (0LL, GLib.get_monotonic_time () - item.LaunchBounceStart);
+          // first minute: back to back; afterwards one every 30 s
+          var phase = elapsed < LAUNCH_BOUNCE_FAST_US ? elapsed % period : (elapsed - LAUNCH_BOUNCE_FAST_US) % LAUNCH_BOUNCE_SLOW_US;
+          if (phase < period)
+            y_offset += position_manager.LaunchBounceHeight * easing_bounce (phase, period, 1);
+        }
+      }
+
       // check for and calculate scroll-animation
       if (item.ScrolledAnimation != AnimationType.NONE) {
         var max_scroll_time = ITEM_SCROLL_DURATION * 1000;
@@ -1202,7 +1214,12 @@ namespace Plank {
       return false;
     }
 
+    const int64 LAUNCH_BOUNCE_FAST_US = 60 * 1000000;
+    const int64 LAUNCH_BOUNCE_SLOW_US = 30 * 1000000;
+
     inline bool item_animation_needed (DockItem item, int64 render_time) {
+      if (item.is_launching ())
+        return true;
       if (item.ClickedAnimation != AnimationType.NONE
           && render_time - item.LastClicked <= (item.ClickedAnimation == AnimationType.BOUNCE ? theme.LaunchBounceTime : theme.ClickTime) * 1000)
         return true;

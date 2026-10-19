@@ -323,6 +323,29 @@ namespace Plank {
       return (App != null && App.is_running ());
     }
 
+    // Launchers whose icon never bounces when clicked: Launchpad is not an application that "opens", it is a
+    // shortcut to a screen (José, 18-10-2026).
+    bool bounces_when_launching () {
+      return !Prefs.Launcher.has_suffix ("/launchpad.desktop");
+    }
+
+    // The launch bounce of macOS: it repeats until the application has a window. After a minute it goes down to
+    // a bounce every 30 s, and it gives up at two minutes (an application without windows never ends otherwise).
+    const int64 LAUNCH_BOUNCE_FAST_US = 60 * 1000000;
+    const int64 LAUNCH_BOUNCE_GIVE_UP_US = 120 * 1000000;
+
+    public override bool is_launching () {
+      if (LaunchBounceStart == 0)
+        return false;
+
+      var elapsed = GLib.get_monotonic_time () - LaunchBounceStart;
+      if (elapsed > LAUNCH_BOUNCE_GIVE_UP_US || (App != null && WindowControl.window_count (App) > 0)) {
+        LaunchBounceStart = 0;
+        return false;
+      }
+      return true;
+    }
+
     public bool is_window () {
       // Without a launcher the item only stands for the running windows
       return (Prefs.Launcher == "");
@@ -564,7 +587,11 @@ namespace Plank {
             || (button == PopupButton.LEFT && (App == null || Helpers.window_count (App, default_provider) == 0
                                                || (mod & Gdk.ModifierType.CONTROL_MASK) == Gdk.ModifierType.CONTROL_MASK))) {
           launch ();
-          return AnimationType.BOUNCE;
+          if (!bounces_when_launching ())
+            return AnimationType.NONE;
+          // The bounce is drawn from LaunchBounceStart (DockRenderer), not from the one-shot click animation.
+          LaunchBounceStart = GLib.get_monotonic_time ();
+          return AnimationType.NONE;
         }
       }
 
