@@ -367,7 +367,33 @@ namespace Docky {
       }
     }
 
+    // El sonido de la Mac (mint-macos: ~/.local/share/sounds/mint-macos/<nombre>.wav|oga|ogg; el archivo lo pone la instalación, nunca el
+    // repo). Sin el archivo no suena el de la Mac y queda el del tema de sonidos. Respeta «Play user interface sound effects».
+    private bool play_mac_sound(string basename) {
+      var cfg_sonido = GLib.SettingsSchemaSource.get_default().lookup("org.cinnamon.desktop.sound", true);
+      if (cfg_sonido != null && !new GLib.Settings("org.cinnamon.desktop.sound").get_boolean("event-sounds")) {
+        return true;   // apagado en System Preferences ▸ Sound: no suena nada
+      }
+      var carpeta = Path.build_filename(Environment.get_user_data_dir(), "sounds", "mint-macos");
+      foreach (unowned string ext in new string[] { "wav", "oga", "ogg" }) {
+        var ruta = Path.build_filename(carpeta, "%s.%s".printf(basename, ext));
+        if (!FileUtils.test(ruta, FileTest.IS_REGULAR)) {
+          continue;
+        }
+        if (sound_context == null) {
+          Canberra.Context.create(out sound_context);
+          sound_context.open();
+        }
+        sound_context.play(0, Canberra.PROP_MEDIA_FILENAME, ruta, null);
+        return true;
+      }
+      return false;
+    }
+
     private void play_event_sound(string sound_name) {
+      if (sound_name == "file-trash" && play_mac_sound("drag to trash")) {
+        return;
+      }
       unowned Gtk.Settings settings = Gtk.Settings.get_default();
       if (!settings.gtk_enable_event_sounds) {
         return;

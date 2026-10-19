@@ -361,6 +361,7 @@ namespace Plank {
             int x, y;
             context.get_device ().get_position (null, out x, out y);
             PoofWindow.get_default ().show_at (x, y);
+            SonidosMac.reproducir ("poof item off dock");
           }
         } else if (controller.window.HoveredItem == null) {
           // Dropped somewhere on dock

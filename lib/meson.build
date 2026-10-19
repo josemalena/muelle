@@ -43,6 +43,7 @@ plank_lib_sources = [
   'Services/Environment.vala',
   'Services/EnvironmentSettings.vala',
   'Services/Logger.vala',
+  'Services/SonidosMac.vala',
   'Services/Helpers.vala',
   'Services/Paths.vala',
   'Services/Preferences.vala',
