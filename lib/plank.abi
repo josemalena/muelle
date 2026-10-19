@@ -545,6 +545,7 @@ function plank_dock_theme_get_TopPadding gdouble plank_dock_theme_get_TopPadding
 function plank_dock_theme_get_UrgentBounceHeight gdouble plank_dock_theme_get_UrgentBounceHeight (PlankDockTheme* self)
 function plank_dock_theme_get_UrgentBounceTime gint plank_dock_theme_get_UrgentBounceTime (PlankDockTheme* self)
 function plank_dock_theme_get_UrgentHueShift gint plank_dock_theme_get_UrgentHueShift (PlankDockTheme* self)
+function plank_dock_theme_get_accent_color void plank_dock_theme_get_accent_color (PlankDockTheme* self, PlankColor* result)
 function plank_dock_theme_get_styled_color void plank_dock_theme_get_styled_color (PlankDockTheme* self, PlankColor* result)
 function plank_dock_theme_get_type GType plank_dock_theme_get_type (void)
 function plank_dock_theme_new PlankDockTheme* plank_dock_theme_new (const gchar* name)

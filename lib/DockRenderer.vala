@@ -65,6 +65,7 @@ namespace Plank {
     Gdk.Rectangle background_rect;
     Surface[] indicator_buffer = new Surface[2];
     Surface[] urgent_indicator_buffer = new Surface[2];
+    Surface[] active_indicator_buffer = new Surface[2];
     Surface? urgent_glow_buffer = null;
 
     int64 last_hide = 0LL;
@@ -238,6 +239,8 @@ namespace Plank {
       indicator_buffer[1] = null;
       urgent_indicator_buffer[0] = null;
       urgent_indicator_buffer[1] = null;
+      active_indicator_buffer[0] = null;
+      active_indicator_buffer[1] = null;
       urgent_glow_buffer = null;
 
       animated_draw ();
@@ -1058,7 +1061,12 @@ namespace Plank {
       unowned Surface indicator_surface;
       var index = indicator_state - 1;
 
-      if ((item_state & ItemState.URGENT) == 0) {
+      if ((item_state & ItemState.URGENT) == 0 && (item_state & ItemState.ACTIVE) != 0) {
+        if (active_indicator_buffer[index] == null)
+          active_indicator_buffer[index] = theme.create_indicator_for_state (indicator_state, ItemState.ACTIVE,
+                                                                             position_manager.IconSize, position_manager.Position, item_buffer);
+        indicator_surface = active_indicator_buffer[index];
+      } else if ((item_state & ItemState.URGENT) == 0) {
         if (indicator_buffer[index] == null)
           indicator_buffer[index] = theme.create_indicator_for_state (indicator_state, ItemState.NORMAL,
                                                                       position_manager.IconSize, position_manager.Position, item_buffer);

@@ -304,6 +304,9 @@ namespace Plank {
         color = (IndicatorStyle == IndicatorStyleType.LEGACY ? get_styled_color () : IndicatorColor);
         color.add_hue (UrgentHueShift);
         color.set_sat (0.6);
+      } else if ((item_state & ItemState.ACTIVE) != 0) {
+        // La app activa lleva el punto en el color de acento del tema (sin sombra detrás del ícono).
+        color = get_accent_color ();
       } else {
         if (IndicatorStyle == IndicatorStyleType.LEGACY) {
           color = get_styled_color ();
@@ -920,6 +923,20 @@ namespace Plank {
       cr.restore ();
 
       return result;
+    }
+
+    /**
+     * El color de acento del tema GTK (@theme_selected_bg_color); si el tema no lo trae, el del indicador.
+     */
+    public Color get_accent_color () {
+      unowned Gtk.StyleContext context = get_style_context ();
+      Gdk.RGBA acento;
+      if (context.lookup_color ("theme_selected_bg_color", out acento)) {
+        Color color = (Color) acento;
+        color.alpha = 1.0;
+        return color;
+      }
+      return IndicatorColor;
     }
 
     public Color get_styled_color () {
