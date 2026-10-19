@@ -649,15 +649,13 @@ namespace Plank {
         }
       }
 
-      // the launch bounce: one bounce of LaunchBounceTime, repeated until the application opens
+      // the launch bounce: one bounce of LaunchBounceTime (a parabola: it rises fast, brakes at the top and falls accelerating),
+      // repeated until the application opens. Measured on a Mac: 0.70 s each, always the same height.
       if (screen_is_composited && item.is_launching ()) {
         var period = theme.LaunchBounceTime * 1000;
         if (period > 0) {
           var elapsed = int64.max (0LL, GLib.get_monotonic_time () - item.LaunchBounceStart);
-          // first minute: back to back; afterwards one every 30 s
-          var phase = elapsed < LAUNCH_BOUNCE_FAST_US ? elapsed % period : (elapsed - LAUNCH_BOUNCE_FAST_US) % LAUNCH_BOUNCE_SLOW_US;
-          if (phase < period)
-            y_offset += position_manager.LaunchBounceHeight * easing_bounce (phase, period, 1);
+          y_offset += position_manager.LaunchBounceHeight * bounce_parabola ((elapsed % period) / (double) period);
         }
       }
 
@@ -706,12 +704,22 @@ namespace Plank {
                && !drag_manager.drop_is_accepted_by (item))
         draw_value.darken += 0.6;
 
-      // bounce icon on urgent state - only check if state flag is set
+      // bounce icon on urgent state - only check if state flag is set. Like a critical alert on a Mac: a group of three jumps
+      // (UrgentBounceHeight, then 0.52x and 0.25x of it, 0.45 s + 0.33 s + 0.22 s) every UrgentBounceTime, for a minute.
       if ((item.State & ItemState.URGENT) != 0 && screen_is_composited && show_notifications) {
-        var urgent_duration = theme.UrgentBounceTime * 1000;
         var urgent_time = int64.max (0LL, frame_time - item.LastUrgent);
-        if (urgent_time < urgent_duration)
-          y_offset += position_manager.UrgentBounceHeight * easing_bounce (urgent_time, urgent_duration, 1.0);
+        var cycle = theme.UrgentBounceTime * 1000;
+        if (cycle > 0 && urgent_time < URGENT_REPEAT_US) {
+          var phase = (urgent_time % cycle) / 1000000.0;
+          var start = 0.0;
+          for (var i = 0; i < URGENT_JUMP_TIME.length; i++) {
+            if (phase < start + URGENT_JUMP_TIME[i]) {
+              y_offset += position_manager.UrgentBounceHeight * URGENT_JUMP_HEIGHT[i] * bounce_parabola ((phase - start) / URGENT_JUMP_TIME[i]);
+              break;
+            }
+            start += URGENT_JUMP_TIME[i];
+          }
+        }
       }
 
       // animate addition/removal
@@ -1214,8 +1222,14 @@ namespace Plank {
       return false;
     }
 
-    const int64 LAUNCH_BOUNCE_FAST_US = 60 * 1000000;
-    const int64 LAUNCH_BOUNCE_SLOW_US = 30 * 1000000;
+    const int64 URGENT_REPEAT_US = 60 * 1000000;
+    const double[] URGENT_JUMP_TIME = { 0.45, 0.33, 0.22 };
+    const double[] URGENT_JUMP_HEIGHT = { 1.0, 0.52, 0.25 };
+
+    /** One jump as a parabola: progress 0..1 in, 0..1..0 out. */
+    static double bounce_parabola (double progress) {
+      return 4.0 * progress * (1.0 - progress);
+    }
 
     inline bool item_animation_needed (DockItem item, int64 render_time) {
       if (item.is_launching ())
@@ -1233,6 +1247,8 @@ namespace Plank {
         return true;
       if (show_notifications
           && render_time - item.LastUrgent <= (hide_progress == 1.0 ? theme.GlowTime : theme.UrgentBounceTime) * 1000)
+        return true;
+      if (show_notifications && (item.State & ItemState.URGENT) != 0 && render_time - item.LastUrgent <= URGENT_REPEAT_US)
         return true;
       if (render_time - item.LastMove <= theme.ItemMoveTime * 1000)
         return true;

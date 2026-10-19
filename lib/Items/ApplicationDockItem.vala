@@ -329,9 +329,8 @@ namespace Plank {
       return !Prefs.Launcher.has_suffix ("/launchpad.desktop");
     }
 
-    // The launch bounce of macOS: it repeats until the application has a window. After a minute it goes down to
-    // a bounce every 30 s, and it gives up at two minutes (an application without windows never ends otherwise).
-    const int64 LAUNCH_BOUNCE_FAST_US = 60 * 1000000;
+    // The launch bounce of macOS: it repeats until the application has a window. It gives up at two minutes (an
+    // application without windows never ends otherwise).
     const int64 LAUNCH_BOUNCE_GIVE_UP_US = 120 * 1000000;
 
     public override bool is_launching () {
