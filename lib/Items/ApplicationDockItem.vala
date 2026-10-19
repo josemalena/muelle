@@ -27,6 +27,12 @@ namespace Plank {
     private const string DESKTOP_ACTION_KEY = "Actions";
     private const string DESKTOP_ACTION_GROUP_NAME = "Desktop Action %s";
 
+    // Muelle: la lista de acciones propia del Dock. Si el .desktop la trae, es la que vale (el resto de claves se ignora);
+    // admite separadores —una acción cuyo Name es «-»— y los demás programas no la ven, así que el .desktop puede traer
+    // las dos listas. Los menús del Dock de la Mac (Finder, System Preferences) llevan separadores.
+    private const string MUELLE_ACTIONS_KEY = "X-Muelle-Actions";
+    private const string SEPARATOR_PREFIX = "\x01separador";
+
     // for the Unity static quicklists
     // see https://wiki.edubuntu.org/Unity/LauncherAPI#Static_Quicklist_entries
     private const string UNITY_QUICKLISTS_KEY = "X-Ayatana-Desktop-Shortcuts";
@@ -739,6 +745,12 @@ namespace Plank {
           items.add (new Gtk.SeparatorMenuItem ());
 
         foreach (var s in actions) {
+          if (s.has_prefix (SEPARATOR_PREFIX)) {
+            // sin dobles ni al principio
+            if (items.size > 0 && !(items[items.size - 1] is Gtk.SeparatorMenuItem))
+              items.add (new Gtk.SeparatorMenuItem ());
+            continue;
+          }
           var values = actions_map.get (s).split (";;");
 
           var item = create_menu_item (s, values[1], true);
@@ -1068,6 +1080,8 @@ namespace Plank {
           actions_map.clear ();
 
           string[] keys = { DESKTOP_ACTION_KEY, UNITY_QUICKLISTS_KEY };
+          if (file.has_key (KeyFileDesktop.GROUP, MUELLE_ACTIONS_KEY))
+            keys = { MUELLE_ACTIONS_KEY };
 
           foreach (unowned string key in keys) {
             if (!file.has_key (KeyFileDesktop.GROUP, key))
@@ -1076,7 +1090,7 @@ namespace Plank {
             foreach (unowned string action in file.get_string_list (KeyFileDesktop.GROUP, key)) {
               // Only actions listed in Actions= with a Desktop Action group can
               // be launched by id, Unity shortcuts only have a command line
-              var action_id = (key == DESKTOP_ACTION_KEY ? action : "");
+              var action_id = (key == DESKTOP_ACTION_KEY || key == MUELLE_ACTIONS_KEY ? action : "");
               var group = DESKTOP_ACTION_GROUP_NAME.printf (action);
               if (!file.has_group (group)) {
                 action_id = "";
@@ -1121,6 +1135,12 @@ namespace Plank {
               }
 
               var action_name = file.get_locale_string (group, KeyFileDesktop.KEY_NAME);
+
+              if (action_name == "-") {
+                // un nombre único por separador: actions_map va por nombre
+                actions.add ("%s%d".printf (SEPARATOR_PREFIX, actions.size));
+                continue;
+              }
 
               var action_icon = "";
               if (file.has_key (group, KeyFileDesktop.KEY_ICON))
