@@ -15,3 +15,10 @@ El README.md en inglés es el del proyecto original.
 
 No incluye imágenes, fuentes ni iconos de Apple. Licencia GPL-3.0, la del proyecto
 original (`COPYING`).
+
+## Based on
+
+Muelle is based on [plank-reloaded](https://github.com/zquestz/plank-reloaded) © zquestz and [Plank](https://launchpad.net/plank) © Plank developers (GPL-3.0+).
+Design based on macOS Catalina; Interface design © Apple Inc. macOS and Catalina are trademarks of Apple Inc. Independent project, not affiliated with or endorsed by Apple.
+Code © 2026 Jose Alberto de la Cruz Malena.
+
