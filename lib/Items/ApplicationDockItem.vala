@@ -561,13 +561,19 @@ namespace Plank {
       unowned AppLaunchContext context = System.get_default ().context;
 
       // GLib activates D-Bus applications and honors Terminal and Path;
-      // Unity shortcuts and launchers it can't load fall back to the command line
+      // Unity shortcuts and launchers it can't load fall back to the command line.
+      // GLib only launches the actions listed in Actions=; one that only X-Muelle-Actions lists is run by its Exec, or
+      // g_desktop_app_info_launch_action would do nothing at all
       if (action_id != "") {
         try {
           var info = new DesktopAppInfo.from_filename (Filename.from_uri (Prefs.Launcher));
           if (info != null) {
-            info.launch_action (action_id, context);
-            return;
+            foreach (unowned string conocida in info.list_actions ()) {
+              if (conocida == action_id) {
+                info.launch_action (action_id, context);
+                return;
+              }
+            }
           }
         } catch (ConvertError e) {
           warning (e.message);
