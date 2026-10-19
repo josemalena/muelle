@@ -304,7 +304,7 @@ namespace Plank {
         return;
       }
 
-      var settings = create_settings ("net.launchpad.plank");
+      var settings = create_settings ("org.mintmacos.muelle");
       var enabled_docks = settings.get_strv ("enabled-docks");
 
       // Allow up to 8 docks

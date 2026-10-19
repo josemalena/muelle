@@ -29,8 +29,8 @@
 	</enum>
 
 
-	<schema id="net.launchpad.plank" path="/net/launchpad/plank/" gettext-domain="plank-reloaded">
-		<child name="docks" schema="net.launchpad.plank.dock.settings"/>
+	<schema id="org.mintmacos.muelle" path="/org/mintmacos/muelle/" gettext-domain="plank-reloaded">
+		<child name="docks" schema="org.mintmacos.muelle.dock.settings"/>
 
 		<key name="enabled-docks" type="as">
 			<default>['dock1']</default>
@@ -39,7 +39,7 @@
 		</key>
 	</schema>
 
-	<schema id="net.launchpad.plank.dock.settings" gettext-domain="plank-reloaded">
+	<schema id="org.mintmacos.muelle.dock.settings" gettext-domain="plank-reloaded">
 		<key name="alignment" enum='GtkAlignType'>
 			<default>'center'</default>
 			<summary>The alignment for the dock along the monitor's edge</summary>

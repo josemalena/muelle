@@ -1,9 +1,10 @@
 plank_bin_sources = [
   'Main.vala',
+  'Migracion.vala',
 ]
 
 plank_bin = executable(
-  'plank',
+  'muelle',
   plank_bin_sources,
   dependencies: [plank_dep, plank_base_dep],
   include_directories: config_inc_dir,

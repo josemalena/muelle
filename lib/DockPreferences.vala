@@ -139,7 +139,7 @@ namespace Plank {
      * {@inheritDoc}
      */
     public DockPreferences (string name) {
-      Object (settings: create_settings ("net.launchpad.plank.dock.settings", "/net/launchpad/plank/docks/%s/".printf (name)));
+      Object (settings: create_settings ("org.mintmacos.muelle.dock.settings", "/org/mintmacos/muelle/docks/%s/".printf (name)));
     }
 
     ~DockPreferences () {

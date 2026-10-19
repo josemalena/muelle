@@ -8,17 +8,17 @@ i18n.merge_file(
 )
 
 install_data(
-  'net.launchpad.plank.gschema.xml',
+  'org.mintmacos.muelle.gschema.xml',
   install_dir: join_paths(data_dir, 'glib-2.0', 'schemas'),
 )
 
 plank_gschema_compile = gnome.compile_schemas(
-  depend_files: files('net.launchpad.plank.gschema.xml'),
+  depend_files: files('org.mintmacos.muelle.gschema.xml'),
 )
 
 i18n.merge_file(
-  input: 'net.launchpad.plank.desktop.in',
-  output: 'net.launchpad.plank.desktop',
+  input: 'muelle.desktop.in',
+  output: 'muelle.desktop',
   po_dir: '../po',
   type: 'desktop',
   install: true,

@@ -25,6 +25,9 @@ namespace Plank {
     Intl.bind_textdomain_codeset (Build.GETTEXT_PACKAGE, "UTF-8");
     Intl.textdomain (Build.GETTEXT_PACKAGE);
 
+    // Antes de que nada cree ~/.config/muelle: trae lo que había con el nombre viejo (Migracion.vala).
+    Migracion.de_plank ();
+
     var application = new Plank.Main ();
     Factory.init (application, new ItemFactory ());
     return application.run (argv);
@@ -56,13 +59,13 @@ namespace Plank {
               build_version: Build.VERSION,
               build_version_info: Build.VERSION_INFO,
 
-              program_name: "Plank Reloaded",
-              exec_name: "plank",
+              program_name: "Muelle",
+              exec_name: "muelle",
 
               app_copyright: "2011-2026",
-              app_dbus: "net.launchpad.plank",
+              app_dbus: "org.mintmacos.Muelle",
               app_icon: "plank-reloaded",
-              app_launcher: "net.launchpad.plank.desktop",
+              app_launcher: "muelle.desktop",
 
               main_url: "https://github.com/zquestz/plank-reloaded",
               help_url: "https://github.com/zquestz/plank-reloaded/issues",
