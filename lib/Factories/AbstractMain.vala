@@ -404,6 +404,51 @@ namespace Plank {
       return launcher.has_suffix (app_launcher);
     }
 
+    /** «macOS Catalina» y «10.15.8» de macos/<id>/version.json del perfil activo (por omisión, los de Catalina). */
+    void read_macos_version (out string name, out string number) {
+      name = "macOS Catalina";
+      number = "10.15.8";
+      string? id = null;
+      string contents;
+      foreach (var path in new string[] { Path.build_filename (Environment.get_user_runtime_dir (), "mint-macos", "macos.json"),
+                                          Path.build_filename (Environment.get_user_config_dir (), "mint-macos", "macos.json") }) {
+        try {
+          if (FileUtils.get_contents (path, out contents)) {
+            MatchInfo m;
+            if (/"version"\s*:\s*"([^"]+)"/.match (contents, 0, out m)) {
+              id = m.fetch (1);
+              break;
+            }
+          }
+        } catch (Error e) {
+        }
+      }
+      try {
+        var file = Path.build_filename (Environment.get_user_data_dir (), "mint-macos", "macos", id ?? "catalina-10.15", "version.json");
+        if (FileUtils.get_contents (file, out contents)) {
+          MatchInfo m;
+          if (/"nombre"\s*:\s*"([^"]+)"/.match (contents, 0, out m))
+            name = m.fetch (1);
+          if (/"numero"\s*:\s*"([^"]+)"/.match (contents, 0, out m))
+            number = m.fetch (1);
+        }
+      } catch (Error e) {
+      }
+    }
+
+    string design_credit () {
+      string name, number;
+      read_macos_version (out name, out number);
+      return "Design based on %s %s".printf (name, number);
+    }
+
+    string apple_trademark_notice () {
+      string name, number;
+      read_macos_version (out name, out number);
+      var short_name = name.has_prefix ("macOS ") ? name.substring (6) : name;
+      return "Interface design © Apple Inc. macOS and %s are trademarks of Apple Inc. Independent project, not affiliated with or endorsed by Apple.".printf (short_name);
+    }
+
     /**
      * Displays the about dialog.
      */
@@ -422,8 +467,10 @@ namespace Plank {
       about_dlg.set_version ("%s\n%s".printf (build_version, build_version_info));
       about_dlg.set_logo_icon_name (app_icon);
 
-      about_dlg.set_comments ("%s. %s".printf (program_name, build_release_name));
-      about_dlg.set_copyright ("Copyright © %s %s Developers".printf (app_copyright, program_name));
+      // Los créditos de los programas de mint-macos (regla de José, 19-10-2026), en inglés: el diseño de la Mac del perfil activo, el código, de quién
+      // es el fork y las marcas de Apple.
+      about_dlg.set_comments ("%s\nBased on plank-reloaded © zquestz and Plank © Plank developers (GPL-3.0+)\n\n%s".printf (design_credit (), apple_trademark_notice ()));
+      about_dlg.set_copyright ("Code © 2026 Jose Alberto de la Cruz Malena");
       about_dlg.set_website (main_url);
       about_dlg.set_website_label ("Website");
 
