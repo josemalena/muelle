@@ -470,7 +470,7 @@ namespace Plank {
       // Los créditos de los programas de mint-macos (regla de José, 19-10-2026), en inglés: el diseño de la Mac del perfil activo, el código, de quién
       // es el fork y las marcas de Apple.
       about_dlg.set_comments ("%s\nBased on plank-reloaded © zquestz and Plank © Plank developers (GPL-3.0+)\n\n%s".printf (design_credit (), apple_trademark_notice ()));
-      about_dlg.set_copyright ("Code © 2026 Jose Alberto de la Cruz Malena");
+      about_dlg.set_copyright ("Code © 2026 Jose Alberto de la Cruz Malena (GPL-3.0-or-later)");
       about_dlg.set_website (main_url);
       about_dlg.set_website_label ("Website");
 
