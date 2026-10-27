@@ -44,6 +44,12 @@ namespace Plank {
     [CCode (notify = false)]
     public double zoom_in_progress { get; private set; }
 
+    // La lupa al entrar sale del perfil de la versión de macOS (medido: ~140 ms, casi lineal); al salir no está medida (solo en macOS 27,
+    // en un cuadro) y queda como siempre.
+    int64 zoom_in_duration = DOCK_ZOOM_DURATION * 1000;
+    int64 zoom_out_duration = DOCK_ZOOM_DURATION * 1000;
+    AnimationMode zoom_in_mode = AnimationMode.EASE_OUT_CUBIC;
+
     /**
      * The current local cursor-position on the dock if hovered.
      */
@@ -102,6 +108,12 @@ namespace Plank {
 
     construct
     {
+      var entrada_ms = AnimacionesMac.numero ("dock-lupa", "ms");
+      if (entrada_ms > 0.0) {
+        zoom_in_duration = (int64) (entrada_ms * 1000.0);
+        zoom_in_mode = AnimacionesMac.curva ("dock-lupa", zoom_in_mode);
+      }
+
       transient_items = new Gee.HashSet<DockItem> ();
       current_items = new Gee.ArrayList<unowned DockItem> ();
 #if BENCHMARK
@@ -291,12 +303,12 @@ namespace Plank {
           hide_progress = (controller.hide_manager.Hidden ? 1.0 : 0.0);
         }
 
-        var zoom_duration = DOCK_ZOOM_DURATION * 1000;
+        var zoom_duration = (controller.hide_manager.Hovered ? zoom_in_duration : zoom_out_duration);
         var zoom_time = int64.max (0LL, frame_time - last_hovered_changed);
         double zoom_progress;
         if (zoom_time < zoom_duration) {
           if (controller.hide_manager.Hovered) {
-            zoom_progress = easing_for_mode (AnimationMode.EASE_OUT_CUBIC, zoom_time, zoom_duration);
+            zoom_progress = easing_for_mode (zoom_in_mode, zoom_time, zoom_duration);
           } else {
             zoom_progress = 1.0 - easing_for_mode (AnimationMode.EASE_IN_CUBIC, zoom_time, zoom_duration);
           }
@@ -1163,7 +1175,7 @@ namespace Plank {
     void hovered_changed () {
       var now = force_frame_time_update ();
       var diff = now - last_hovered_changed;
-      var time = DOCK_ZOOM_DURATION * 1000;
+      var time = (controller.hide_manager.Hovered ? zoom_in_duration : zoom_out_duration);
 
       if (diff < time)
         last_hovered_changed = now + (diff - time);
@@ -1209,7 +1221,7 @@ namespace Plank {
         return true;
       }
 
-      if (frame_time - last_hovered_changed <= DOCK_ZOOM_DURATION * 1000)
+      if (frame_time - last_hovered_changed <= int64.max (zoom_in_duration, zoom_out_duration))
         return true;
 
       if (theme.FadeOpacity == 1.0) {

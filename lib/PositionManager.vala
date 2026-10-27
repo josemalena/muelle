@@ -106,6 +106,9 @@ namespace Plank {
     construct
     {
       static_dock_region = {};
+      var alcance = AnimacionesMac.numero ("dock-lupa", "alcance_anchos");
+      if (alcance > 0.0)
+        zoom_reach = alcance;
     }
 
     /**
@@ -875,6 +878,8 @@ namespace Plank {
     int DockBackgroundWidth;
 
     double ZoomPercent;
+    // Alcance de la campana de la lupa en anchos de ícono, del perfil de macOS; 0 = no medido.
+    double zoom_reach = 0.0;
 
     Gdk.Rectangle background_rect;
 
@@ -1458,7 +1463,10 @@ namespace Plank {
           center_position = center.x;
 
           // offset from the center of the true position, ranged between 0 and the zoom size
-          double offset = double.min (Math.fabs (cursor_position - center_position), zoom_icon_size);
+          // El alcance de la campana: lo medido en la Mac es ~6 anchos de ícono a cada lado (perfil, «alcance_anchos»; el ancho es lo que
+          // hay entre centros en reposo, ícono más separación); sin medida, el tamaño del ícono ampliado, como siempre.
+          double zoom_range = (zoom_reach > 0.0 && !expand_for_drop ? zoom_reach * (icon_size + ItemPadding) : zoom_icon_size);
+          double offset = double.min (Math.fabs (cursor_position - center_position), zoom_range);
 
           double offset_percent;
           if (expand_for_drop) {
@@ -1466,7 +1474,7 @@ namespace Plank {
             offset += offset * zoom_icon_size / icon_size;
             offset_percent = double.min (orig_offset / zoom_icon_size, offset / (2.0 * zoom_icon_size));
           } else {
-            offset_percent = offset / zoom_icon_size;
+            offset_percent = offset / zoom_range;
           }
 
           if (offset_percent > 0.99)
@@ -1491,7 +1499,9 @@ namespace Plank {
           } else {
             offset *= zoom_in_percent - 1.0;
           }
-          offset *= 1.0 - offset_percent / 3.0;
+          // Lo que se corre el ícono es lo que ocupan los de antes al crecer: la integral de la campana (1 - p²/3). La fórmula
+          // vieja (1 - p/3) solo cuadraba para el alcance corto de Plank.
+          offset *= (zoom_reach > 0.0 && !expand_for_drop ? 1.0 - offset_percent * offset_percent / 3.0 : 1.0 - offset_percent / 3.0);
 
           if (cursor_position > center_position)
             center_position -= offset;
