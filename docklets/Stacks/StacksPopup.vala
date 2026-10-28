@@ -83,6 +83,12 @@ namespace Docky {
     Gdk.Rectangle footer_rect;
     bool grabbed = false;
     bool closing = false;
+    // Arrastre: la celda donde se pulsó el botón, dónde, y si ya empezó (con el arrastre en marcha el grab del popup se suelta).
+    int press_cell = -1;
+    double press_x = 0;
+    double press_y = 0;
+    bool dragging = false;
+    StacksEntry? drag_entry = null;
 
     public StacksPopup (DockController controller, DockItem item, GLib.File folder,
                         Gee.ArrayList<StacksEntry> entries, StacksPopupMode mode) {
@@ -409,6 +415,11 @@ namespace Docky {
     }
 
     public override bool motion_notify_event (Gdk.EventMotion event) {
+      if (!dragging && press_cell >= 0 && (event.state & Gdk.ModifierType.BUTTON1_MASK) != 0
+          && Gtk.drag_check_threshold (this, (int) press_x, (int) press_y, (int) event.x, (int) event.y)) {
+        start_drag (event);
+        return true;
+      }
       var now = cell_at (event.x, event.y);
       if (now != hovered) {
         hovered = now;
@@ -428,14 +439,62 @@ namespace Docky {
     public override bool button_press_event (Gdk.EventButton event) {
       // Con el puntero tomado, un clic fuera llega aquí con coordenadas fuera
       // de la ventana: se cierra, como en macOS.
-      if (event.x < 0 || event.y < 0 || event.x >= width_px || event.y >= height_px)
+      if (event.x < 0 || event.y < 0 || event.x >= width_px || event.y >= height_px) {
         close_now ();
+        return true;
+      }
+      if (event.button == Gdk.BUTTON_PRIMARY) {
+        press_cell = cell_at (event.x, event.y);
+        press_x = event.x;
+        press_y = event.y;
+      }
       return true;
     }
 
+    /**
+     * Cada archivo del abanico y de la cuadrícula se arrastra a otra ventana (text/uri-list; el destino escoge copiar, mover o enlazar,
+     * como con el Finder) y la pila se cierra al soltar. El grab del popup se suelta al empezar: GTK toma el puntero para el arrastre.
+     */
+    void start_drag (Gdk.EventMotion event) {
+      if (press_cell < 0 || cells[press_cell].entry == null)
+        return;
+      dragging = true;
+      drag_entry = cells[press_cell].entry;
+      if (grabbed) {
+        get_display ().get_default_seat ().ungrab ();
+        grabbed = false;
+      }
+      Gtk.TargetEntry[] targets = { { "text/uri-list", 0, 0 } };
+      var list = new Gtk.TargetList (targets);
+      var context = Gtk.drag_begin_with_coordinates (this, list,
+                                                     Gdk.DragAction.COPY | Gdk.DragAction.MOVE | Gdk.DragAction.LINK,
+                                                     (int) Gdk.BUTTON_PRIMARY, event, (int) event.x, (int) event.y);
+      if (context == null) {
+        dragging = false;
+        drag_entry = null;
+        return;
+      }
+      var icon = cells[press_cell].icon;
+      if (icon != null)
+        Gtk.drag_set_icon_pixbuf (context, icon, icon.width / 2, icon.height / 2);
+    }
+
+    public override void drag_data_get (Gdk.DragContext context, Gtk.SelectionData data, uint info, uint time) {
+      if (drag_entry != null)
+        data.set_uris ({ drag_entry.file.get_uri () });
+    }
+
+    public override void drag_end (Gdk.DragContext context) {
+      dragging = false;
+      drag_entry = null;
+      press_cell = -1;
+      close_now ();
+    }
+
     public override bool button_release_event (Gdk.EventButton event) {
-      if (event.button != Gdk.BUTTON_PRIMARY)
+      if (event.button != Gdk.BUTTON_PRIMARY || dragging)
         return true;
+      press_cell = -1;
 
       var index = cell_at (event.x, event.y);
       if (index == -2 || (index >= 0 && cells[index].entry == null)) {
@@ -474,7 +533,8 @@ namespace Docky {
     }
 
     public override bool grab_broken_event (Gdk.EventGrabBroken event) {
-      close_now ();
+      if (!dragging)
+        close_now ();
       return true;
     }
   }
