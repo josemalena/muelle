@@ -360,6 +360,36 @@ namespace Plank {
       return xids;
     }
 
+    /**
+     * The name of a Mac application running in Darling, which has no .desktop: its windows carry it in _DARLING_APP_NAME
+     * (UTF8_STRING, agreed with Darling; it is not WM_NAME, which is the window title). null for any other application.
+     */
+    public static string? get_darling_app_name (Bamf.Application app)
+    {
+      unowned Gdk.X11.Display? display = Gdk.Display.get_default () as Gdk.X11.Display;
+      Array<uint32>? xids = get_xids (app);
+      if (display == null || xids == null)
+        return null;
+
+      for (var i = 0; i < xids.length; i++) {
+        var window = new Gdk.X11.Window.foreign_for_display (display, (X.Window) xids.index (i));
+        if (window == null)
+          continue;
+
+        Gdk.Atom type;
+        int format;
+        uint8[] data;
+        if (Gdk.property_get (window, Gdk.Atom.intern ("_DARLING_APP_NAME", false), Gdk.Atom.intern ("UTF8_STRING", false),
+                              0, 1024, 0, out type, out format, out data) && data.length > 0) {
+          var name = ((string) data).strip ();
+          if (name != "")
+            return name;
+        }
+      }
+
+      return null;
+    }
+
     public static unowned Gdk.Pixbuf? get_app_icon (Bamf.Application app)
     {
       unowned Gdk.Pixbuf? pbuf = null;

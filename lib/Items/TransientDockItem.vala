@@ -44,7 +44,8 @@ namespace Plank {
       if (App != null) {
         var launcher = Matcher.desktop_file_for_application (App);
         if (launcher == null) {
-          Text = App.get_name ();
+          // a Mac application in Darling has no .desktop: its windows name it (_DARLING_APP_NAME) and give the icon (_NET_WM_ICON)
+          Text = WindowControl.get_darling_app_name (App) ?? App.get_name ();
           update_forced_pixbuf ();
         } else {
           Prefs.Launcher = launcher;
