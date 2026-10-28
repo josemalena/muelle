@@ -50,6 +50,9 @@ namespace Plank {
 
       WindowControl.get_wnck_screen ().window_opened.connect_after (handle_window_opened);
 
+      StartupMonitor.get_default ().started.connect (handle_startup_started);
+      StartupMonitor.get_default ().ended.connect (handle_startup_ended);
+
       current_workspace_only = Prefs.CurrentWorkspaceOnly;
 
       if (current_workspace_only)
@@ -62,6 +65,9 @@ namespace Plank {
       Prefs.notify["ShowRecent"].disconnect (handle_show_recent_changed);
 
       WindowControl.get_wnck_screen ().window_opened.disconnect (handle_window_opened);
+
+      StartupMonitor.get_default ().started.disconnect (handle_startup_started);
+      StartupMonitor.get_default ().ended.disconnect (handle_startup_ended);
 
       if (current_workspace_only)
         disconnect_wnck ();
@@ -352,7 +358,44 @@ namespace Plank {
     // the item looks windowless until Wnck knows it; check again then
     [CCode (instance_pos = -1)]
     void handle_window_opened (Wnck.Screen screen, Wnck.Window? window) {
+      if (window != null && launching.size > 0) {
+        var wm_class = (window.get_class_group_name () ?? "").down ();
+        var done = new Gee.ArrayList<string> ();
+        foreach (var entry in launching.entries)
+          if (entry.value.WmClass == wm_class)
+            done.add (entry.key);
+        foreach (var id in done)
+          remove_launching (id);
+      }
       update_visible_elements ();
+    }
+
+    // Applications asked to start (startup-notification) that have no window yet, by startup id. Only the Mac
+    // applications (WM_CLASS «darling-…») get a bouncing placeholder: the .desktop ones already bounce when
+    // their own dock item is clicked.
+    Gee.HashMap<string, LaunchingDockItem> launching = new Gee.HashMap<string, LaunchingDockItem> ();
+
+    [CCode (instance_pos = -1)]
+    void handle_startup_started (string id, string name, string icon, string wm_class) {
+      if (!wm_class.down ().has_prefix ("darling-") || launching.has_key (id))
+        return;
+      var item = new LaunchingDockItem (id, name != "" ? name : wm_class, icon, wm_class);
+      launching.set (id, item);
+      add (item);
+      item.start ();
+    }
+
+    [CCode (instance_pos = -1)]
+    void handle_startup_ended (string id) {
+      remove_launching (id);
+    }
+
+    void remove_launching (string id) {
+      LaunchingDockItem? item = null;
+      if (!launching.unset (id, out item) || item == null)
+        return;
+      item.stop ();
+      remove (item);
     }
 
     [CCode (instance_pos = -1)]
